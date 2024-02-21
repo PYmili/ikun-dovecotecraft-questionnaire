@@ -10,21 +10,73 @@
 </head>
 <body>
     <div class="container">
-        <h1>我的世界服务器白名单申请问卷</h1>
+        <h1 class="title">我的世界鸽子窝服务器白名单申请问卷</h1>
+        <hr>
         <form id="whitelist-form" action="" method="POST">
-            <label for="username">游戏用户名：</label>
-            <input type="text" id="username" name="username" required>
+            <div class="banner">            
+                <p>
+                    <label for="username">用户名：</label>
+                    <input type="text" id="uername" name="username" required>
+                </p>
+                <p>
+                    <label for="gamename">游戏名：</label>
+                    <input type="text" id="game_name" name="game_name" required>
+                </p>
+                <p>
+                    <label for="qq-number">用户QQ：</label>
+                    <input type="qq-number" id="qq_number" name="qq_number" required>
+                </p>
+                <p>
+                    <label for="friend_qq-number">朋友QQ：</label>
+                    <input type="friend_qq-number" id="friend_qq-number" name="friend_qq-number" placeholder="没有可以不填">
+                </p>
+                <p>
+                    <label for="review_channel">通过什么渠道知晓本服：</label>
+                    <input type="review_channel" id="review_channel" name="review_channel" required>
+                </p>
 
-            <label for="email">电子邮箱：</label>
-            <input type="email" id="email" name="email" required>
-
-            <label for="age">年龄：</label>
-            <input type="number" id="age" name="age" min="13" max="99" required>
-
-            <label for="reason">申请理由：</label>
-            <textarea id="reason" name="reason" rows="4" cols="50" required></textarea>
-
-            <button type="submit">提交申请</button>
+                <p>
+                    <label for="age">年龄：</label>
+                    <input type="number" id="age" name="age" min="10" max="99" required>
+                </p>
+                <p>
+                    <label for="has_official_account">是否有正版账号:</label><input type="radio" name="has_official_account" value="male">是
+                    <input type="radio" name="has_official_account" value="female">否
+                </p>
+                <p>
+                    <label for="current_status">当前状态:</label><input type="radio" name="current_status" value="male">在校学生
+                    <input type="radio" name="current_status" value="female">社会人员
+                </p>
+                <p>
+                    <label for="technical_direction" name="technical_direction">游戏时长</label>
+                    <select name="technical_direction">
+                        <option value="1">鸽子</option>
+                        <option value="2">红石</option>
+                        <option value="3">建筑</option>
+                        <option value="4">生存</option>
+                    </select>
+                </p>
+                <p>
+                    <label for="playtime" name="playtime">游戏时长</label>
+                    <select name="playtime">
+                        <option value="1">1年以内</option>
+                        <option value="2">2-3年</option>
+                        <option value="3">3-5年</option>
+                        <option value="4">5年以上</option>
+                    </select>
+                </p>
+                <p>
+                    <label for="seif_introduction">自我介绍：</label><br>
+                    <textarea id="seif_introduction" name="seif_introduction" rows="4" cols="40" placeholder="请输入内容。。。。。。"></textarea>
+                </p>
+                <p>
+                    <label for="reason">申请理由：</label><br>
+                    <textarea id="reason" name="reason" rows="4" cols="40" placeholder="请输入内容。。。。。。"></textarea>
+                </p>
+                <p>
+                    <button type="submit">提交申请</button>
+                </p>
+            </div>   
         </form>
     </div>
 </body>
