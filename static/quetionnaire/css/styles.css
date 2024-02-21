@@ -1,0 +1,15 @@
+.title{
+    color: rgb(22, 88, 66);
+}
+.banner{
+    border: 2px rgb(10, 75, 53);
+}
+.container{
+    width: 600px;
+    opacity: 0.6;
+    background-image: url(https://tse4-mm.cn.bing.net/th/id/OIP-C.wvwowhz7eE3kaApNlf6p-AHaHc?rs=1&pid=ImgDetMain);
+    background-size: 100% 100%;
+    font-size: 15px;
+    color: black;
+    font-weight: 600;
+}
