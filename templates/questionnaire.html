@@ -1,83 +1,103 @@
-<!-- templates/whitelist_form.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>我的世界服务器白名单申请</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='quetionnaire\css\styles.css') }}">
-    <script src="{{ url_for('static', filename='quetionnaire\css\main.js') }}"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='quetionnaire/css/styles.css') }}">
 </head>
 <body>
-    <div class="container">
+    <form>
         <h1 class="title">我的世界鸽子窝服务器白名单申请问卷</h1>
-        <hr>
-        <form id="whitelist-form" action="" method="POST">
-            <div class="banner">            
-                <p>
-                    <label for="username">用户名：</label>
-                    <input type="text" id="uername" name="username" required>
-                </p>
-                <p>
-                    <label for="gamename">游戏名：</label>
-                    <input type="text" id="game_name" name="game_name" required>
-                </p>
-                <p>
-                    <label for="qq-number">用户QQ：</label>
-                    <input type="qq-number" id="qq_number" name="qq_number" required>
-                </p>
-                <p>
-                    <label for="friend_qq-number">朋友QQ：</label>
-                    <input type="friend_qq-number" id="friend_qq-number" name="friend_qq-number" placeholder="没有可以不填">
-                </p>
-                <p>
-                    <label for="review_channel">通过什么渠道知晓本服：</label>
-                    <input type="review_channel" id="review_channel" name="review_channel" required>
-                </p>
+        <div class="container">
+            <div id="whitelist-form">
+                <div class="banner">            
+                    <div class="form-group">
+                        <label for="username">用户名：</label>
+                        <input type="text" id="username" name="username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="game_name">游戏名：</label>
+                        <input type="text" id="game_name" name="game_name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="qq_number">用户QQ：</label>
+                        <input type="text" id="qq_number" name="qq_number" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="friend_qq_number">朋友QQ：</label>
+                        <input type="text" id="friend_qq_number" name="friend_qq_number" placeholder="没有可以不填">
+                    </div>
+                    <div class="form-group">
+                        <label for="review_channel">通过什么渠道知晓本服：</label>
+                        <input type="text" id="review_channel" name="review_channel" required>
+                    </div>
 
-                <p>
-                    <label for="age">年龄：</label>
-                    <input type="number" id="age" name="age" min="10" max="99" required>
-                </p>
-                <p>
-                    <label for="has_official_account">是否有正版账号:</label><input type="radio" name="has_official_account" value="male">是
-                    <input type="radio" name="has_official_account" value="female">否
-                </p>
-                <p>
-                    <label for="current_status">当前状态:</label><input type="radio" name="current_status" value="male">在校学生
-                    <input type="radio" name="current_status" value="female">社会人员
-                </p>
-                <p>
-                    <label for="technical_direction" name="technical_direction">擅长领域:</label>
-                    <select name="technical_direction">
-                        <option value="1">鸽子</option>
-                        <option value="2">红石</option>
-                        <option value="3">建筑</option>
-                        <option value="4">生存</option>
-                    </select>
-                </p>
-                <p>
-                    <label for="playtime" name="playtime">游戏时长:</label>
-                    <select name="playtime">
-                        <option value="1">1年以内</option>
-                        <option value="2">2-3年</option>
-                        <option value="3">3-5年</option>
-                        <option value="4">5年以上</option>
-                    </select>
-                </p>
-                <p>
-                    <label for="seif_introduction">自我介绍：</label><br>
-                    <textarea id="seif_introduction" name="seif_introduction" rows="4" cols="40" placeholder="请输入内容。。。。。。"></textarea>
-                </p>
-                <p>
-                    <label for="reason">申请理由：</label><br>
-                    <textarea id="reason" name="reason" rows="4" cols="40" placeholder="请输入内容。。。。。。"></textarea>
-                </p>
-                <p>
-                    <button type="submit">提交申请</button>
-                </p>
-            </div>   
-        </form>
-    </div>
+                    <div class="form-group">
+                        <label for="age">年龄：</label>
+                        <input type="number" id="age" name="age" min="10" max="99" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">邮箱：</label>
+                        <input type="text" id="email" name="email" placeholder="输入邮箱" required><br>
+                        <input type="text" id="verify_code" name="verify_code" style="width: 120px;padding: 10px;" placeholder="验证码" required>
+                        <a id="send_verification_code" onclick="sendVerificationCode();" class="verification-code-button">发送验证码</a>
+                        <small id="verification_code_message"></small>
+                    </div>                                                                       
+                    <div class="form-group">
+                        <label>是否有正版账号:</label>
+                        <input type="radio" name="has_official_account" id="has_official_account_yes" value="yes">
+                        <label for="has_official_account_yes">是</label>
+                        <input type="radio" name="has_official_account" id="has_official_account_no" value="no" checked>
+                        <label for="has_official_account_no">否</label>
+                    </div>
+                    <div class="form-group">
+                        <label>当前状态:</label>
+                        <input type="radio" name="current_status" id="current_status_student" value="在校学生" checked>
+                        <label for="current_status_student">在校学生</label>
+                        <input type="radio" name="current_status" id="current_status_working" value="社会人员">
+                        <label for="current_status_working">社会人员</label>
+                    </div>
+                    <div class="form-group">
+                        <label for="technical_direction">擅长领域:</label>
+                        <select name="technical_direction" id="technical_direction">
+                            <option value="鸽子">鸽子</option>
+                            <option value="红石">红石</option>
+                            <option value="建筑">建筑</option>
+                            <option value="生存">生存</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="playtime">游戏时长:</label>
+                        <select name="playtime" id="playtime">
+                            <option value="1年以内">1年以内</option>
+                            <option value="2-3年">2-3年</option>
+                            <option value="3-5年">3-5年</option>
+                            <option value="5年以上">5年以上</option>
+                        </select>
+                    </div>
+                    {% for count, question in questions.items() %}
+                        <div class="form-group">
+                            <label for="question{{ count }}"></label>{{ question }}<br>
+                            <textarea id="question{{ count }}" name="question" rows="4" cols="40" placeholder="请输入答案"></textarea>
+                        </div>
+                    {% endfor %}
+                    <div class="form-group">
+                        <label for="self_introduction">自我介绍（AI）：</label><br>
+                        <textarea id="self_introduction" name="self_introduction" rows="4" cols="40" placeholder="请输入内容..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="reason">申请理由（AI）：</label><br>
+                        <textarea id="reason" name="reason" rows="4" cols="40" placeholder="请输入内容..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <button id="submit_button">提交申请</button>
+                    </div>
+                </div>   
+            </div>
+        </div>
+    </form>
+    <div id="loading-message" style="display: none;">AI审核中，请耐心等待...</div>
+    <script src="{{ url_for('static', filename='quetionnaire/js/main.js') }}"></script>
 </body>
 </html>
