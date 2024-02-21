@@ -1,11 +1,31 @@
+<!-- templates/whitelist_form.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>我的世界服务器白名单申请</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='quetionnaire\css\styles.css') }}">
+    <script src="{{ url_for('static', filename='quetionnaire\css\main.js') }}"></script>
 </head>
 <body>
-    
+    <div class="container">
+        <h1>我的世界服务器白名单申请问卷</h1>
+        <form id="whitelist-form" action="" method="POST">
+            <label for="username">游戏用户名：</label>
+            <input type="text" id="username" name="username" required>
+
+            <label for="email">电子邮箱：</label>
+            <input type="email" id="email" name="email" required>
+
+            <label for="age">年龄：</label>
+            <input type="number" id="age" name="age" min="13" max="99" required>
+
+            <label for="reason">申请理由：</label>
+            <textarea id="reason" name="reason" rows="4" cols="50" required></textarea>
+
+            <button type="submit">提交申请</button>
+        </form>
+    </div>
 </body>
 </html>
