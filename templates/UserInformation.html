@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户信息</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='UserInformation/css/main.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="menu vertical-menu">
+            <h2>菜单</h2>
+            <ul>
+                <li><a href="#success">已通过用户</a></li>
+                <li><a href="#white_list">未获得白名单</a></li>
+            </ul>
+        </div>
+        <section id="success" class="content">
+            <h1>已通过用户信息</h1>
+            {% for information in userInformations %}
+            <div class="user-card">
+                <p>用户名: <span>{{ information['username'] }}</span></p>
+                <p>游戏名: <span>{{ information['game_name'] }}</span></p>
+                <!-- 其他信息默认隐藏 -->
+                <div class="additional-info hidden">
+                    <p>qq号: <span>{{ information['qq_number'] }}</span></p>
+                    <p>邮箱: <span>{{ information['email'] }}</span></p>
+                    <p>年龄: <span>{{ information['age'] }}</span></p>
+                    <p>推荐人: <span>{{ information['friend_qq_number'] }}</span></p>
+                    <p>注册时间: <span>{{ information['registration_time'] }}</span></p>
+                    <p>正版账号: <span>{{ information['has_official_account'] }}</span></p>
+                    <p>当前状态: <span>{{ information['current_status'] }}</span></p>
+                    <p>从哪里来: <span>{{ information['review_channel'] }}</span></p>
+                    <p>玩mc多久: <span>{{ information['playtime'] }}</span></p>
+                    <p>擅长领域: <span>{{ information['technical_direction'] }}</span></p>
+                </div>
+            </div>
+            {% endfor %}
+        </section>
+        <section id="white_list" class="content">
+            <h1>未获得白名单</h1>
+            {% for ngwli in noGetWhiteListInformations %}
+            <div class="user-card">
+                <p>用户名: <span>{{ ngwli['username'] }}</span></p>
+                <p>游戏名: <span>{{ ngwli['game_name'] }}</span></p>
+                <p><a href="{{ ngwli['username'] }}">给予白名单</a></p>
+                <!-- 其他信息默认隐藏 -->
+                <div class="additional-info hidden">
+                    <p>qq号: <span>{{ ngwli['qq_number'] }}</span></p>
+                    <p>邮箱: <span>{{ ngwli['email'] }}</span></p>
+                    <p>年龄: <span>{{ ngwli['age'] }}</span></p>
+                    <p>推荐人: <span>{{ ngwli['friend_qq_number'] }}</span></p>
+                    <p>注册时间: <span>{{ ngwli['registration_time'] }}</span></p>
+                    <p>正版账号: <span>{{ ngwli['has_official_account'] }}</span></p>
+                    <p>当前状态: <span>{{ ngwli['current_status'] }}</span></p>
+                    <p>从哪里来: <span>{{ ngwli['review_channel'] }}</span></p>
+                    <p>玩mc多久: <span>{{ ngwli['playtime'] }}</span></p>
+                    <p>擅长领域: <span>{{ ngwli['technical_direction'] }}</span></p>
+                </div>
+            </div>
+            {% endfor %}
+        </section>
+    </div>
+    <script src="{{ url_for('static', filename='UserInformation/js/main.js') }}"></script>
+</body>
+</html>

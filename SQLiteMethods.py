@@ -1,9 +1,12 @@
 import os
 import sqlite3
-from datetime import datetime
-from typing import List, Any, Dict, Optional
+from typing import List, Any, Dict
+
+from loguru import logger
 
 MinecraftWhitelistManagerDB = os.path.join(os.getcwd(), "db", "minecraft_whitelist.db")
+MinecraftAdminUserDB = os.path.join(os.getcwd(), "db", "admin.db")
+
 
 class MinecraftWhitelistManager:
     def __init__(self, db_name: str=MinecraftWhitelistManagerDB) -> None:
@@ -27,7 +30,8 @@ class MinecraftWhitelistManager:
                 playtime INTEGER,
                 technical_direction TEXT,
                 age INTEGER,
-                email TEXT UNIQUE
+                email TEXT UNIQUE,
+                whitelisted TEXT DEFAULT 'No'
             );
         '''
         self.cursor.execute(sql_create_table)
@@ -40,18 +44,18 @@ class MinecraftWhitelistManager:
             values_tuple = tuple(data_dict.get(key, None) for key in [
                 'username', 'game_name', 'has_official_account', 'current_status', 'review_channel', 
                 'qq_number', 'friend_qq_number', 'playtime', 'technical_direction', 'age'
-            ])
+            ]) + ('No',)  # 设置默认值为'No'
             sql_insert = '''
                 INSERT INTO users (username, game_name, has_official_account, current_status, review_channel, 
-                                  qq_number, friend_qq_number, playtime, technical_direction, age) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+                                  qq_number, friend_qq_number, playtime, technical_direction, age, whitelisted) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
             '''
             try:
                 self.cursor.execute(sql_insert, values_tuple)
                 self.conn.commit()
                 return True
             except sqlite3.Error as e:
-                print(f"Error inserting data: {e}")
+                logger.error(f"Error inserting data: {e}")
                 return False
         else:
             return False
@@ -67,14 +71,21 @@ class MinecraftWhitelistManager:
         self.conn.commit()
         return True
 
-    def modify_data(self, user_id, column_name, new_value) -> bool:
-        # 修改指定列的数据
-        sql_modify = f'''
-            UPDATE users SET {column_name} = ? WHERE user_id = ?
-        '''
-        self.cursor.execute(sql_modify, (new_value, user_id))
-        self.conn.commit()
-        return True
+    def modify_whitelisted_status_by_username(self, username, is_whitelisted: str) -> bool:
+        # 修改指定用户名的用户 被添加到白名单
+        if is_whitelisted not in ('Yes', 'No'):
+            return False
+        
+        try:
+            sql_modify = '''
+                UPDATE users SET whitelisted = ? WHERE username = ?
+            '''
+            self.cursor.execute(sql_modify, (is_whitelisted, username))
+            self.conn.commit()
+            return True
+        except Exception as e:
+            logger.error(f"效果白名单发生错误：" + e)
+            return False
     
     def is_email_registered(self, email: str) -> bool:
         # 检查指定的email是否已经注册过
@@ -83,11 +94,29 @@ class MinecraftWhitelistManager:
         count = self.cursor.fetchone()[0]
         return count > 0
 
-    def get_user_by_username(self, username: str) -> Any:
+    def get_data_by_username(self, username: str) -> dict:
         # 通过用户名获取用户数据
         sql_query = "SELECT * FROM users WHERE username = ?"
         self.cursor.execute(sql_query, (username,))
-        return self.cursor.fetchone()
+        user_data = self.cursor.fetchone()
+        if user_data:
+            return {
+                "username": user_data[1],
+                "game_name": user_data[2],
+                "registration_time": user_data[3],
+                "qq_number": user_data[4],
+                "has_official_account": user_data[5],
+                "current_status": user_data[6],
+                "review_channel": user_data[7],
+                "friend_qq_number": user_data[8],
+                "playtime": user_data[9],
+                "technical_direction": user_data[10],
+                "age": user_data[11],
+                "eamil": user_data[12],
+                "whitelisted": user_data[13]
+            }
+        else:
+            return None
 
     def get_recent_users(self, limit: int) -> Any:
         # 通过最近注册时间获取用户数据
@@ -105,43 +134,97 @@ class MinecraftWhitelistManager:
         self.conn.close()
 
 
+class AdminDataManager:
+    def __init__(self, db_name=MinecraftAdminUserDB):
+        self.conn = sqlite3.connect(db_name)
+        self.cursor = self.conn.cursor()
+        # 创建用户表
+        self.create_table()
+
+    def create_table(self):
+        self.cursor.execute("""
+            CREATE TABLE IF NOT EXISTS Admins (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT UNIQUE NOT NULL,
+                password TEXT NOT NULL,
+                key TEXT
+            )
+        """)
+        self.conn.commit()
+
+    def insert_new_user(self, username, password, key=None):
+        try:
+            if key is None:
+                self.cursor.execute("INSERT INTO Admins (username, password) VALUES (?, ?)", (username, password))
+            else:
+                self.cursor.execute("INSERT INTO Admins (username, password, key) VALUES (?, ?, ?)", (username, password, key))
+            self.conn.commit()
+            return True
+        except sqlite3.IntegrityError as e:  # 处理用户名已存在的异常
+            logger.error(f"无法插入新用户:{username}, error message：{e}")
+            return False
+
+    def get_user_data_by_username(self, username):
+        self.cursor.execute("SELECT * FROM Admins WHERE username=?", (username,))
+        admin_data = self.cursor.fetchone()
+        if admin_data:
+            return {"id": admin_data[0], "username": admin_data[1], "password": admin_data[2], "key": admin_data[3]}
+        else:
+            return None
+
+    def update_user_data_by_username(self, username, new_password, new_key=None):
+        if new_key is None:
+            self.cursor.execute("UPDATE Admins SET password=? WHERE username=?", (new_password, username))
+        else:
+            self.cursor.execute("UPDATE Admins SET password=?, key=? WHERE username=?", (new_password, new_key, username))
+        if self.cursor.rowcount > 0:
+            self.conn.commit()
+            return True
+        else:
+            return False
+
+    def update_user_key_by_username(self, username, new_key):
+        self.cursor.execute("UPDATE Admins SET key=? WHERE username=?", (new_key, username))
+        if self.cursor.rowcount > 0:
+            self.conn.commit()
+            return True
+        else:
+            return False
+
+    def close_connection(self):
+        self.conn.close()
+
+
 if __name__ in "__main__":
+    # 调用迁移函数
+    # migrate_data()
     # 使用示例：
     manager = MinecraftWhitelistManager()
 
-    # 插入新用户
-    # new_user_data = {
-    #     'username': 'player1',
-    #     'game_name': 'GamePlayer1',
-    #     'has_official_account': True,
-    #     'current_status': 'Active',
-    #     'review_channel': 'Website',
-    #     'qq_number': 123456,
-    #     'friend_qq_number': 7890,
-    #     'playtime': 100,
-    #     'technical_direction': 'Redstone',
-    #     "age": 19
-    # }
-    # manager.insert_data(new_user_data)
-
-    # 更新玩家信息
-    # update_data = {'current_status': 'Pending', 'playtime': 200}
-    # manager.update_data(1, update_data)
-
-    # 修改特定列的信息
-    # manager.modify_data(1, 'friend_qq_number', 999999)
-
-    # 通过用户名获取数据
-    # user_data = manager.get_user_by_username('player1')
-    user_data = manager.get_user_by_username('PYmili')
-
-    # 获取最近注册的10个用户数据
-    recent_users = manager.get_recent_users(10)
-
     # 获取所有用户名
     all_usernames = manager.get_all_usernames()
+    
+    user_data = manager.get_data_by_username('PYmili')
+
+    # 获取最近注册的10个用户数据
+    recent_Admins = manager.get_recent_users(10)
 
     manager.close_connection()
 
     print(user_data)
     print(all_usernames)
+
+    # manager = AdminDataManager()
+    # manager.create_table()
+
+    # # 插入新用户
+    # is_inserted = manager.insert_new_user("PYmili", "a20050208...", "hodikaqherfoihafio")
+    # if is_inserted:
+    #     print("New user inserted successfully.")
+    # else:
+    #     print("Failed to insert the new user.")
+
+    # # 获取新插入的用户数据
+    # new_user_data = manager.get_user_data_by_username("PYmili")
+    # if new_user_data:
+    #     print(new_user_data)

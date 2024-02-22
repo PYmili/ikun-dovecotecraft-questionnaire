@@ -1,0 +1,107 @@
+/* Reset default margin and padding */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Global styles */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f0f0f0;
+}
+
+.container {
+    display: flex; /* 使用 Flexbox 布局 */
+    background-color: rgba(0, 0, 0, 0.1);
+    height: 100vh;
+}
+
+.menu {
+    flex: 0 0 200px; /* 设置侧边栏的固定宽度 */
+    background-color: rgba(79, 39, 255, 0.767); /* 侧边栏背景颜色 */
+    padding: 20px;
+    overflow-y: auto; /* 如果内容溢出侧边栏高度，启用垂直滚动条 */
+}
+
+.menu h2 {
+    font-size: 24px;
+    margin-bottom: 10px;
+}
+
+.menu ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.menu ul li {
+    margin-bottom: 10px;
+}
+
+.menu ul li a {
+    display: block;
+    padding: 10px;
+    color: #fff;
+    text-decoration: none;
+    transition: background-color 0.3s ease;
+}
+
+.menu ul li a:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 5px;
+}
+
+.content {
+    flex: 1; /* 填充剩余空间 */
+    padding: 20px;
+}
+
+/* User card styles */
+.user-card {
+    background-color: #fff;
+    border-radius: 5px;
+    padding: 15px;
+    margin-bottom: 20px;
+    transition: box-shadow 0.3s ease; /* 添加卡片效果的过渡 */
+}
+
+.user-card:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* 悬停时卡片阴影效果 */
+}
+
+.user-card p {
+    margin-bottom: 10px;
+}
+
+.user-card p span {
+    font-weight: bold;
+}
+
+.additional-info {
+    display: none; /* 默认隐藏额外信息 */
+    opacity: 0; /* 默认隐藏额外信息时设置透明度为0 */
+    transform: translateY(100%); /* 默认隐藏额外信息时下移 */
+    transition: opacity 0.3s ease, transform 0.3s ease; /* 添加透明度和位置过渡动画 */
+}
+
+.visible {
+    display: block !important; /* 强制显示额外信息 */
+    opacity: 1; /* 设置完全不透明 */
+    transform: translateY(0); /* 上移显示额外信息 */
+}
+
+/* Responsive styles */
+@media screen and (max-width: 768px) {
+    .container {
+        flex-direction: column; /* 在小屏幕下变为纵向布局 */
+        width: 100vh;
+        height: 100vh;
+    }
+
+    .menu {
+        flex: none; /* 取消固定宽度 */
+        width: 100%; /* 宽度填满父容器 */
+        margin-bottom: 20px;
+        height: auto; /* 自动高度，撑开至内容高度 */
+    }
+}
