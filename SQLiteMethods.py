@@ -18,20 +18,20 @@ class MinecraftWhitelistManager:
         # 用户表
         sql_create_table = '''
             CREATE TABLE IF NOT EXISTS users (
-                user_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                username TEXT NOT NULL,
-                game_name TEXT NOT NULL,
-                registration_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                qq_number INTEGER,
-                has_official_account BOOLEAN,
-                current_status TEXT,
-                review_channel TEXT,
-                friend_qq_number INTEGER DEFAULT NULL,
-                playtime INTEGER,
-                technical_direction TEXT,
-                age INTEGER,
-                email TEXT UNIQUE,
-                whitelisted TEXT DEFAULT 'No'
+                user_id INTEGER PRIMARY KEY AUTOINCREMENT, -- 用户id
+                username TEXT NOT NULL, -- 用户名
+                game_name TEXT NOT NULL, -- 游戏名
+                registration_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- 注册时间
+                qq_number INTEGER, -- QQ号
+                has_official_account TEXT, -- 是否持有官方账户
+                current_status TEXT, -- 当前状态
+                review_channel TEXT, -- 来自哪里
+                friend_qq_number INTEGER DEFAULT NULL, -- 推荐人qq
+                playtime INTEGER, -- 已玩游戏多久了
+                technical_direction TEXT, -- 技术方向
+                email TEXT UNIQUE, -- 邮箱
+                whitelisted TEXT DEFAULT 'No',  -- 是否已被添加的白名单
+                questionnaire_answers TEXT  -- 用户问答数据
             );
         '''
         self.cursor.execute(sql_create_table)
@@ -39,25 +39,26 @@ class MinecraftWhitelistManager:
 
     def insert_data(self, data_dict: Dict[str, Any]) -> bool:
         # 插入新数据
-        required_keys = ['username', 'game_name', 'current_status', 'review_channel', 'playtime', 'technical_direction', 'age']
-        if all(key in data_dict for key in required_keys):
-            values_tuple = tuple(data_dict.get(key, None) for key in [
-                'username', 'game_name', 'has_official_account', 'current_status', 'review_channel', 
-                'qq_number', 'friend_qq_number', 'playtime', 'technical_direction', 'age'
-            ]) + ('No',)  # 设置默认值为'No'
-            sql_insert = '''
-                INSERT INTO users (username, game_name, has_official_account, current_status, review_channel, 
-                                  qq_number, friend_qq_number, playtime, technical_direction, age, whitelisted) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
-            '''
-            try:
-                self.cursor.execute(sql_insert, values_tuple)
-                self.conn.commit()
-                return True
-            except sqlite3.Error as e:
-                logger.error(f"Error inserting data: {e}")
-                return False
-        else:
+        if not data_dict:
+            return False
+        values = []
+        for key, value in data_dict.items():
+            if value is None:
+                values.append("空")
+            values.append(value)
+        
+        values_tuple = tuple(values)
+        sql_insert = '''
+            INSERT INTO users (username, game_name, qq_number, has_official_account, current_status,
+                review_channel, friend_qq_number, playtime, technical_direction, email, questionnaire_answers) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+        '''
+        try:
+            self.cursor.execute(sql_insert, values_tuple)
+            self.conn.commit()
+            return True
+        except sqlite3.Error as e:
+            logger.error(f"Error inserting data: {e}")
             return False
 
     def update_data(self, user_id, data_dict: dict) -> bool:
@@ -111,9 +112,9 @@ class MinecraftWhitelistManager:
                 "friend_qq_number": user_data[8],
                 "playtime": user_data[9],
                 "technical_direction": user_data[10],
-                "age": user_data[11],
-                "eamil": user_data[12],
-                "whitelisted": user_data[13]
+                "email": user_data[11],
+                "whitelisted": user_data[12],
+                "questionnaire_answers": user_data[13]
             }
         else:
             return None
@@ -199,32 +200,32 @@ if __name__ in "__main__":
     # 调用迁移函数
     # migrate_data()
     # 使用示例：
-    manager = MinecraftWhitelistManager()
+    # manager = MinecraftWhitelistManager()
 
-    # 获取所有用户名
-    all_usernames = manager.get_all_usernames()
+    # # 获取所有用户名
+    # all_usernames = manager.get_all_usernames()
     
-    user_data = manager.get_data_by_username('PYmili')
+    # user_data = manager.get_data_by_username('PYmili')
 
-    # 获取最近注册的10个用户数据
-    recent_Admins = manager.get_recent_users(10)
+    # # 获取最近注册的10个用户数据
+    # recent_Admins = manager.get_recent_users(10)
 
-    manager.close_connection()
+    # manager.close_connection()
 
-    print(user_data)
-    print(all_usernames)
+    # print(user_data)
+    # print(all_usernames)
 
-    # manager = AdminDataManager()
-    # manager.create_table()
+    manager = AdminDataManager()
+    manager.create_table()
 
-    # # 插入新用户
-    # is_inserted = manager.insert_new_user("PYmili", "a20050208...", "hodikaqherfoihafio")
-    # if is_inserted:
-    #     print("New user inserted successfully.")
-    # else:
-    #     print("Failed to insert the new user.")
+    # 插入新用户
+    is_inserted = manager.insert_new_user("admin", "iamikun", "HFJKWHOhfkweal")
+    if is_inserted:
+        print("New user inserted successfully.")
+    else:
+        print("Failed to insert the new user.")
 
-    # # 获取新插入的用户数据
-    # new_user_data = manager.get_user_data_by_username("PYmili")
-    # if new_user_data:
-    #     print(new_user_data)
+    # 获取新插入的用户数据
+    new_user_data = manager.get_user_data_by_username("admin")
+    if new_user_data:
+        print(new_user_data)

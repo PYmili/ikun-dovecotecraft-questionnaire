@@ -50,7 +50,7 @@ submitButton.addEventListener('click', function(event) {
     const qqNumber = document.getElementById('qq_number').value;
     const friendQQNumber = document.getElementById('friend_qq_number').value;
     const reviewChannel = document.getElementById('review_channel').value;
-    const age = document.getElementById('age').value;
+    // const age = document.getElementById('age').value;
     const email = document.getElementById('email').value;
     const verificationCode = document.getElementById('verify_code').value;
     const hasOfficialAccount = document.querySelector('input[name="has_official_account"]:checked').value;
@@ -67,7 +67,7 @@ submitButton.addEventListener('click', function(event) {
     console.log('用户QQ:', qqNumber);
     console.log('朋友QQ:', friendQQNumber);
     console.log('通过渠道:', reviewChannel);
-    console.log('年龄:', age);
+    // console.log('年龄:', age);
     console.log('邮箱:', email);
     console.log('验证码:', verificationCode);
     console.log('是否有正版账号:', hasOfficialAccount);
@@ -111,7 +111,6 @@ submitButton.addEventListener('click', function(event) {
             qqNumber: qqNumber,
             friendQQNumber: friendQQNumber,
             reviewChannel: reviewChannel,
-            age: age,
             email: email,
             verificationCode: verificationCode,
             hasOfficialAccount: hasOfficialAccount,

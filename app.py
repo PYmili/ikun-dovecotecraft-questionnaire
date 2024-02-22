@@ -216,15 +216,18 @@ def questionaire_upload():
     
     questions = json.loads(request.json.get("questions"))
     QUESTIONS = get_questions()
+    save_questions = {}
     if questions:
         count = 1
-        for question in questions.values():
+        for question_key, question_value in questions.items():
             question_result = GPT_Event(
-                QUESTIONS[count], f"用户：" + question
+                QUESTIONS[count], f"用户：" + question_value
             )
             if question_result != "通过":
                 result["content"] = f"问题：{QUESTIONS[count]}\n未通过原因：" + question_result
                 return result
+            
+            save_questions[QUESTIONS[count]] = question_value
             count += 1
     
     self_introduction = request.json.get("selfIntroduction")
@@ -238,7 +241,7 @@ def questionaire_upload():
     if self_introduction_result != "通过":
         result["content"] = self_introduction_result
         return result
-    if reason_result != "通过":
+    if reason_result != "通过 AI 审核，后续管理员会进行白名单给予，请耐心等待！":
         result['content'] = reason_result
         return result
 
@@ -252,8 +255,8 @@ def questionaire_upload():
         "friend_qq_number": request.json.get("friendQQNumber"),
         "playtime": request.json.get("playtime"),
         "technical_direction": request.json.get("technicalDirection"),
-        "age": request.json.get("age"),
-        "email": email
+        "email": email,
+        "questionnaire_answers": ";".join([key+"用户回答："+value for key, value in save_questions.items()])
     }
     manager = MinecraftWhitelistManager()
     insert_result = manager.insert_data(MinecraftUserData)
@@ -304,6 +307,6 @@ def give_whitelist():
 if __name__ in "__main__":
     app.run(
         host="0.0.0.0",
-        port="8080",
+        port="8888",
         debug=True
     )

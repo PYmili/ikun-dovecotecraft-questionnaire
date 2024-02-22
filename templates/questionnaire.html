@@ -25,18 +25,17 @@
                         <input type="text" id="qq_number" name="qq_number" required>
                     </div>
                     <div class="form-group">
-                        <label for="friend_qq_number">朋友QQ：</label>
+                        <label for="friend_qq_number">推荐人QQ(选填)：</label>
                         <input type="text" id="friend_qq_number" name="friend_qq_number" placeholder="没有可以不填">
                     </div>
                     <div class="form-group">
                         <label for="review_channel">通过什么渠道知晓本服：</label>
                         <input type="text" id="review_channel" name="review_channel" required>
                     </div>
-
-                    <div class="form-group">
+                    <!-- <div class="form-group">
                         <label for="age">年龄：</label>
                         <input type="number" id="age" name="age" min="10" max="99" required>
-                    </div>
+                    </div> -->
                     <div class="form-group">
                         <label for="email">邮箱：</label>
                         <input type="text" id="email" name="email" placeholder="输入邮箱" required><br>
@@ -53,10 +52,16 @@
                     </div>
                     <div class="form-group">
                         <label>当前状态:</label>
-                        <input type="radio" name="current_status" id="current_status_student" value="在校学生" checked>
-                        <label for="current_status_student">在校学生</label>
-                        <input type="radio" name="current_status" id="current_status_working" value="社会人员">
-                        <label for="current_status_working">社会人员</label>
+                        <input type="radio" name="current_status" id="current_status_student" value="初中及以下" checked>
+                        <label for="current_status_student">初中及以下</label>
+                        <input type="radio" name="current_status" id="current_status_working" value="职高/普高在读">
+                        <label for="current_status_working">职高/普高在读</label>
+                        <input type="radio" name="current_status" id="current_status_working" value="大专/本科在读">
+                        <label for="current_status_working">大专/本科在读</label>
+                        <input type="radio" name="current_status" id="current_status_working" value="参加工作">
+                        <label for="current_status_working">参加工作</label>
+                        <input type="radio" name="current_status" id="current_status_working" value="自由职业">
+                        <label for="current_status_working">自由职业</label>
                     </div>
                     <div class="form-group">
                         <label for="technical_direction">擅长领域:</label>
@@ -78,7 +83,7 @@
                     </div>
                     {% for count, question in questions.items() %}
                         <div class="form-group">
-                            <label for="question{{ count }}"></label>{{ question }}<br>
+                            <label for="question{{ count }}"></label>{{ question }}（AI）<br>
                             <textarea id="question{{ count }}" name="question" rows="4" cols="40" placeholder="请输入答案"></textarea>
                         </div>
                     {% endfor %}

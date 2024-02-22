@@ -25,7 +25,6 @@
                 <div class="additional-info hidden">
                     <p>qq号: <span>{{ information['qq_number'] }}</span></p>
                     <p>邮箱: <span>{{ information['email'] }}</span></p>
-                    <p>年龄: <span>{{ information['age'] }}</span></p>
                     <p>推荐人: <span>{{ information['friend_qq_number'] }}</span></p>
                     <p>注册时间: <span>{{ information['registration_time'] }}</span></p>
                     <p>正版账号: <span>{{ information['has_official_account'] }}</span></p>
@@ -33,6 +32,12 @@
                     <p>从哪里来: <span>{{ information['review_channel'] }}</span></p>
                     <p>玩mc多久: <span>{{ information['playtime'] }}</span></p>
                     <p>擅长领域: <span>{{ information['technical_direction'] }}</span></p>
+                    {% for questionnaire_answers in information['questionnaire_answers'].split(';') %}
+                    <p>问答: 
+                        <span>{{ questionnaire_answers.split('用户回答：')[0] }}</span><br>
+                        <span style="color: blue;">用户回答：{{ questionnaire_answers.split('用户回答：')[1] }}</span>
+                    </p>
+                    {% endfor %}
                 </div>
             </div>
             {% endfor %}
