@@ -30,7 +30,7 @@ class MinecraftWhitelistManager:
                 playtime INTEGER, -- 已玩游戏多久了
                 technical_direction TEXT, -- 技术方向
                 email TEXT UNIQUE, -- 邮箱
-                whitelisted TEXT DEFAULT 'No',  -- 是否已被添加的白名单
+                whitelisted TEXT DEFAULT 'No',  -- 是否已被添加的白名单 / 现改为是否被审核员通过
                 questionnaire_answers TEXT  -- 用户问答数据
             );
         '''
@@ -200,32 +200,18 @@ if __name__ in "__main__":
     # 调用迁移函数
     # migrate_data()
     # 使用示例：
-    # manager = MinecraftWhitelistManager()
+    manager = MinecraftWhitelistManager()
 
     # # 获取所有用户名
     # all_usernames = manager.get_all_usernames()
     
     # user_data = manager.get_data_by_username('PYmili')
 
-    # # 获取最近注册的10个用户数据
-    # recent_Admins = manager.get_recent_users(10)
+    # 获取最近注册的10个用户数据
+    recent_users = manager.get_recent_users(10)
 
-    # manager.close_connection()
+    manager.close_connection()
 
     # print(user_data)
     # print(all_usernames)
-
-    manager = AdminDataManager()
-    manager.create_table()
-
-    # 插入新用户
-    is_inserted = manager.insert_new_user("admin", "iamikun", "HFJKWHOhfkweal")
-    if is_inserted:
-        print("New user inserted successfully.")
-    else:
-        print("Failed to insert the new user.")
-
-    # 获取新插入的用户数据
-    new_user_data = manager.get_user_data_by_username("admin")
-    if new_user_data:
-        print(new_user_data)
+    print(recent_users)

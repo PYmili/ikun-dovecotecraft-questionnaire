@@ -72,6 +72,7 @@ document.addEventListener("DOMContentLoaded", function() {
             })
             .then(data => {
                 // 处理响应
+                location.reload(true);
                 alert(data['content']);
             })
             .catch(error => {

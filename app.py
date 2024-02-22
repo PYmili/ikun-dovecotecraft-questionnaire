@@ -219,7 +219,7 @@ def questionaire_upload():
     save_questions = {}
     if questions:
         count = 1
-        for question_key, question_value in questions.items():
+        for question_value in questions.values():
             question_result = GPT_Event(
                 QUESTIONS[count], f"用户：" + question_value
             )
@@ -241,7 +241,7 @@ def questionaire_upload():
     if self_introduction_result != "通过":
         result["content"] = self_introduction_result
         return result
-    if reason_result != "通过 AI 审核，后续管理员会进行白名单给予，请耐心等待！":
+    if reason_result != "通过":
         result['content'] = reason_result
         return result
 
@@ -266,7 +266,7 @@ def questionaire_upload():
         return result
     
     result["code"] = 200
-    result["content"] = reason_result
+    result["content"] = "通过 AI 审核，后续管理员会进行白名单给予，请耐心等待！"
     return result
 
 

@@ -12,7 +12,7 @@
             <h2>菜单</h2>
             <ul>
                 <li><a href="#success">已通过用户</a></li>
-                <li><a href="#white_list">未获得白名单</a></li>
+                <li><a href="#white_list">待二次审核</a></li>
             </ul>
         </div>
         <section id="success" class="content">
@@ -43,12 +43,12 @@
             {% endfor %}
         </section>
         <section id="white_list" class="content">
-            <h1>未获得白名单</h1>
+            <h1>待二次审核</h1>
             {% for ngwli in noGetWhiteListInformations %}
             <div class="user-card">
                 <p>用户名: <span>{{ ngwli['username'] }}</span></p>
                 <p>游戏名: <span>{{ ngwli['game_name'] }}</span></p>
-                <p><a href="{{ ngwli['username'] }}">给予白名单</a></p>
+                <p><a href="{{ ngwli['username'] }}">给予通过</a></p>
                 <!-- 其他信息默认隐藏 -->
                 <div class="additional-info hidden">
                     <p>qq号: <span>{{ ngwli['qq_number'] }}</span></p>
@@ -61,6 +61,12 @@
                     <p>从哪里来: <span>{{ ngwli['review_channel'] }}</span></p>
                     <p>玩mc多久: <span>{{ ngwli['playtime'] }}</span></p>
                     <p>擅长领域: <span>{{ ngwli['technical_direction'] }}</span></p>
+                    {% for ngwki_answer in ngwli['questionnaire_answers'].split(';') %}
+                    <p>问答: 
+                        <span>{{ ngwki_answer.split('用户回答：')[0] }}</span><br>
+                        <span style="color: blue;">用户回答：{{ ngwki_answer.split('用户回答：')[1] }}</span>
+                    </p>
+                    {% endfor %}
                 </div>
             </div>
             {% endfor %}
