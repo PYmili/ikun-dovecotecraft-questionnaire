@@ -11,7 +11,7 @@ from loguru import logger
 import questionaire_gpt
 from methods import CreateKey
 from SQLiteMethods import MinecraftWhitelistManager, AdminDataManager
-from VerificationCode import VerificationCodeService
+from VerificationCode import VerificationCodeService, EmailEvent
 
 app = Flask(
     __name__,
@@ -267,6 +267,25 @@ def questionaire_upload():
     
     result["code"] = 200
     result["content"] = "通过 AI 审核，后续管理员会进行白名单给予，请耐心等待！"
+
+    # 邮件提醒管理员
+    email_event = EmailEvent()
+    email_event.setSubject(f"用户：{request.json.get('username')}，通过验证。")
+    email_event.setContent(
+        content_html=f"""
+        <html>
+        <body>
+            <p>用户名：{request.json.get('username')}</p>
+            <p>游戏名：{request.json.get('username')}</p>
+            <p><a herf="http://www.pymili-blog.icu:8888/user_information">请您进行二次审核（点击跳转）</a></p>
+        </body>
+        </html>
+        """
+    )
+    send_result = email_event.send()
+    if send_result is False:
+        logger.error("发送邮件提醒失败！")
+        
     return result
 
 

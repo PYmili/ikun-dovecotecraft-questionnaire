@@ -197,10 +197,11 @@ class AdminDataManager:
 
 
 if __name__ in "__main__":
+    from methods import CreateKey
     # 调用迁移函数
     # migrate_data()
     # 使用示例：
-    manager = MinecraftWhitelistManager()
+    # manager = MinecraftWhitelistManager()
 
     # # 获取所有用户名
     # all_usernames = manager.get_all_usernames()
@@ -208,10 +209,16 @@ if __name__ in "__main__":
     # user_data = manager.get_data_by_username('PYmili')
 
     # 获取最近注册的10个用户数据
-    recent_users = manager.get_recent_users(10)
+    # recent_users = manager.get_recent_users(10)
 
-    manager.close_connection()
+    # manager.close_connection()
 
     # print(user_data)
     # print(all_usernames)
-    print(recent_users)
+    # print(recent_users)
+
+    manager = AdminDataManager()
+    # manager.insert_new_user("2546947442", "sagiri0915", CreateKey())
+    print(manager.get_user_data_by_username("PYmili"))
+    print(manager.get_user_data_by_username("admin"))
+    print(manager.get_user_data_by_username("2546947442"))

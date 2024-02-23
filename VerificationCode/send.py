@@ -1,11 +1,83 @@
+import random
+import time
 import ssl
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.header import Header
+from loguru import logger
 
-SENDER = 'mc2005wj@163.com'
+SENDER = "mc2005wj@163.com"
 IMAP_SMTP_CODE = "ROHNIVYQBGGMOVWG"
+SMTP_SERVER = "smtp.163.com"
+
+RECEIVERS = [
+    "2663210946@qq.com",
+    "1909687319@qq.com",
+    "1752073141@qq.com",
+    "1430942558@qq.com",
+    "341692320@qq.com",
+    "2097632843@qq.com"
+]
+
+
+class EmailEvent:
+    def __init__(
+            self,
+            smtp_server: str = SMTP_SERVER,
+            port: int = 465,
+            sender: str = SENDER
+        ) -> None:
+        """
+        发送邮件事件
+        """
+        self.smtpServer = smtp_server
+        self.port = port
+        self.sender = sender
+        self.message = MIMEMultipart()
+        self.message['From'] = Header(sender)
+    
+    def setSubject(self, subject: str) -> None:
+        """
+        设置主题
+        """
+        self.message['Subject'] = Header(subject)
+    
+    def setContent(self, content_text: str = None, content_html: str = None) -> None:
+        """
+        设置邮件内容
+        """
+        if not content_html:
+            self.message.attach(MIMEText(content_text, "plain", "utf-8"))
+        if not content_text:
+            self.message.attach(MIMEText(content_html, "html", "utf-8"))
+        else:
+            self.message.attach(MIMEText(content_text, "plain", "utf-8"))
+            self.message.attach(MIMEText(content_html, "html", "utf-8"))
+
+    def send(self, receivers: list = RECEIVERS) -> bool:
+        """
+        发送，可对多个邮件发送
+        """
+        # 加密上下文
+        context = ssl.create_default_context()
+        try:
+            server = smtplib.SMTP_SSL(self.smtpServer, self.port, context=context)
+            server.login(self.sender, IMAP_SMTP_CODE)
+            
+            # 发送邮件
+            for receiver in receivers:
+                server.sendmail(self.sender, receiver, self.message.as_string())
+                logger.info(f"成功发送信息至邮件：{receiver}")
+                time.sleep(random.randint(1, 5))
+            return True
+
+        except Exception as e:
+            return False
+
+        finally:
+            server.quit()
+
 
 def sendEmailVerufucationCode(receiver: str, code: str) -> bool:
     """
@@ -50,8 +122,7 @@ def sendEmailVerufucationCode(receiver: str, code: str) -> bool:
 
 
 if __name__ in "__main__":
-    result = sendEmailVerufucationCode("2097632843@qq.com", "hfihawef")
-    if result:
-        print("发送成功！")
-    else:
-        print("发送失败！")
+    email_event = EmailEvent()
+    email_event.setSubject("来自PYmili的测试！")
+    email_event.setContent("此次为测试内容！")
+    print(email_event.send(SENDERS))
