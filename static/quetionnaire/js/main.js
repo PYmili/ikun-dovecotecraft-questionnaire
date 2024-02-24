@@ -137,6 +137,8 @@ submitButton.addEventListener('click', function(event) {
             alert(data['content']);
         })
         .catch(error => {
+            // 隐藏加载中消息
+            hideLoadingMessage()
             alert('请求失败！请联系管理员！');
         });
 });

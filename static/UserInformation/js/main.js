@@ -44,7 +44,7 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 
     // 获取所有给予白名单链接
-    var giveWhitelistLinks = document.querySelectorAll('#white_list .user-card a');
+    var giveWhitelistLinks = document.querySelectorAll('#secondary_review .user-card a');
 
     // 为每个给予白名单链接添加点击事件监听器
     giveWhitelistLinks.forEach(function(link) {
@@ -55,7 +55,7 @@ document.addEventListener("DOMContentLoaded", function() {
             var username = this.getAttribute('href');
             
             // 发送请求给予白名单
-            fetch('/give_whitelist', {
+            fetch('/passed_second_review', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

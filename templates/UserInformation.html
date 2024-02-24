@@ -12,11 +12,11 @@
             <h2>菜单</h2>
             <ul>
                 <li><a href="#success">已通过用户</a></li>
-                <li><a href="#white_list">待二次审核</a></li>
+                <li><a href="#secondary_review">待二次审核</a></li>
             </ul>
         </div>
         <section id="success" class="content">
-            <h1>已通过用户信息</h1>
+            <h1>所有用户信息</h1>
             {% for information in userInformations %}
             <div class="user-card">
                 <p>用户名: <span>{{ information['username'] }}</span></p>
@@ -32,6 +32,7 @@
                     <p>从哪里来: <span>{{ information['review_channel'] }}</span></p>
                     <p>玩mc多久: <span>{{ information['playtime'] }}</span></p>
                     <p>擅长领域: <span>{{ information['technical_direction'] }}</span></p>
+                    <p>审核人: <span>{{ information['reviewed_by'] }}</span></p>
                     {% for questionnaire_answers in information['questionnaire_answers'].split(';') %}
                     <p>问答: 
                         <span>{{ questionnaire_answers.split('用户回答：')[0] }}</span><br>
@@ -42,9 +43,9 @@
             </div>
             {% endfor %}
         </section>
-        <section id="white_list" class="content">
+        <section id="secondary_review" class="content">
             <h1>待二次审核</h1>
-            {% for ngwli in noGetWhiteListInformations %}
+            {% for ngwli in noPassedSecondReviewInformations %}
             <div class="user-card">
                 <p>用户名: <span>{{ ngwli['username'] }}</span></p>
                 <p>游戏名: <span>{{ ngwli['game_name'] }}</span></p>

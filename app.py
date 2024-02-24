@@ -45,6 +45,11 @@ def get_questions() -> dict:
     return result
 
 
+@app.route("/")
+def index():
+    return redirect("/questionnaire")
+
+
 @app.route("/questionnaire", methods=["GET"])
 def questionnaire():
     """
@@ -76,21 +81,20 @@ def user_information():
         return redirect("/login")
     
     userInformations = []
-    noGetWhiteListInformations = []
+    noPassedSecondReviewInformations = []
     white_manager = MinecraftWhitelistManager()
     for user in white_manager.get_all_usernames():
         white_result = white_manager.get_data_by_username(user)
         if not white_result:
             continue
-        if white_result['whitelisted'] == "No":
-            noGetWhiteListInformations.append(white_result)
+        if white_result['passed_second_review'] == "No":
+            noPassedSecondReviewInformations.append(white_result)
         userInformations.append(white_result)
     white_manager.close_connection()
-
     return render_template(
         "UserInformation.html",
         userInformations=userInformations,
-        noGetWhiteListInformations=noGetWhiteListInformations
+        noPassedSecondReviewInformations=noPassedSecondReviewInformations
     )
 
 
@@ -256,7 +260,8 @@ def questionaire_upload():
         "playtime": request.json.get("playtime"),
         "technical_direction": request.json.get("technicalDirection"),
         "email": email,
-        "questionnaire_answers": ";".join([key+"用户回答："+value for key, value in save_questions.items()])
+        "questionnaire_answers": ";".join([key+"用户回答："+value for key, value in save_questions.items()]),
+        "reviewed_by": "暂未通过审核"
     }
     manager = MinecraftWhitelistManager()
     insert_result = manager.insert_data(MinecraftUserData)
@@ -277,7 +282,8 @@ def questionaire_upload():
         <body>
             <p>用户名：{request.json.get('username')}</p>
             <p>游戏名：{request.json.get('username')}</p>
-            <p><a herf="http://www.pymili-blog.icu:8888/user_information">请您进行二次审核（点击跳转）</a></p>
+            <p>已为您生成一个随机邀请码：{CreateKey(length=10)}</p>
+            <p><a href="http://www.pymili-blog.icu:8888/user_information">请您进行二次审核（点击跳转）</a></p>
         </body>
         </html>
         """
@@ -289,20 +295,25 @@ def questionaire_upload():
     return result
 
 
-@app.route("/give_whitelist", methods=["POST"])
-def give_whitelist():
+@app.route("/passed_second_review", methods=["POST"])
+def passed_second_review():
     """
-    给予用户白名单
+    给予用户二次审核通过
     """
     result = {
         "code": 400,
         "content": "参数错误！"
     }
-    if not request.json:
+    if not all([request.json, request.cookies]):
         return result
     
     username = request.json.get("username")
     if not username:
+        return result
+    
+    reviewer_name = request.cookies.get("username")
+    if not reviewer_name:
+        result['content'] = "cookies错误，非法操作！"
         return result
     
     manager = MinecraftWhitelistManager()
@@ -312,10 +323,16 @@ def give_whitelist():
         result['content'] = "用户不存在！"
         return result
     
-    modify_result = manager.modify_whitelisted_status_by_username(username, "Yes")
+    modify_result = manager.modify_passed_second_review_status_by_username(username, "Yes")
     manager.close_connection()
     if not modify_result:
         result['content'] = "服务器错误！"
+        return result
+    
+    manager = MinecraftWhitelistManager()
+    reviewer_result = manager.add_reviewer_name(username=username, reviewer_name=reviewer_name)
+    if reviewer_result is False:
+        result['content'] = "给予成功，但添加审核人名称错误！"
         return result
     
     result['code'] = 200

@@ -30,8 +30,9 @@ class MinecraftWhitelistManager:
                 playtime INTEGER, -- 已玩游戏多久了
                 technical_direction TEXT, -- 技术方向
                 email TEXT UNIQUE, -- 邮箱
-                whitelisted TEXT DEFAULT 'No',  -- 是否已被添加的白名单 / 现改为是否被审核员通过
-                questionnaire_answers TEXT  -- 用户问答数据
+                passed_second_review TEXT DEFAULT 'No',  -- 是否被审核员通过
+                questionnaire_answers TEXT,  -- 用户问答数据
+                reviewed_by TEXT -- 将用户通过审核的人
             );
         '''
         self.cursor.execute(sql_create_table)
@@ -42,7 +43,7 @@ class MinecraftWhitelistManager:
         if not data_dict:
             return False
         values = []
-        for key, value in data_dict.items():
+        for value in data_dict.values():
             if value is None:
                 values.append("空")
             values.append(value)
@@ -50,8 +51,8 @@ class MinecraftWhitelistManager:
         values_tuple = tuple(values)
         sql_insert = '''
             INSERT INTO users (username, game_name, qq_number, has_official_account, current_status,
-                review_channel, friend_qq_number, playtime, technical_direction, email, questionnaire_answers) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+                review_channel, friend_qq_number, playtime, technical_direction, email, questionnaire_answers, reviewed_by) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
         '''
         try:
             self.cursor.execute(sql_insert, values_tuple)
@@ -71,21 +72,35 @@ class MinecraftWhitelistManager:
         self.cursor.execute(sql_update, values)
         self.conn.commit()
         return True
+    
+    def add_reviewer_name(self, username: str, reviewer_name: str) -> bool:
+        """
+        添加对用户通过审核的审核员名称。
+        """
+        try:
+            sql = """
+                UPDATE users SET reviewed_by = ? WHERE username = ?
+            """
+            self.cursor.execute(sql, (reviewer_name, username))
+            self.conn.commit()
+            return True
+        except Exception as e:
+            logger.error(f"添加审核人名称时出现错误：{e}")
 
-    def modify_whitelisted_status_by_username(self, username, is_whitelisted: str) -> bool:
-        # 修改指定用户名的用户 被添加到白名单
-        if is_whitelisted not in ('Yes', 'No'):
+    def modify_passed_second_review_status_by_username(self, username, is_passed_second_review: str) -> bool:
+        # 修改指定用户名的用户 被添加到通过二审
+        if is_passed_second_review not in ('Yes', 'No'):
             return False
         
         try:
             sql_modify = '''
-                UPDATE users SET whitelisted = ? WHERE username = ?
+                UPDATE users SET passed_second_review = ? WHERE username = ?
             '''
-            self.cursor.execute(sql_modify, (is_whitelisted, username))
+            self.cursor.execute(sql_modify, (is_passed_second_review, username))
             self.conn.commit()
             return True
         except Exception as e:
-            logger.error(f"效果白名单发生错误：" + e)
+            logger.error(f"通过二次审核时数据库错误：{e}")
             return False
     
     def is_email_registered(self, email: str) -> bool:
@@ -113,8 +128,9 @@ class MinecraftWhitelistManager:
                 "playtime": user_data[9],
                 "technical_direction": user_data[10],
                 "email": user_data[11],
-                "whitelisted": user_data[12],
-                "questionnaire_answers": user_data[13]
+                "passed_second_review": user_data[12],
+                "questionnaire_answers": user_data[13],
+                "reviewed_by": user_data[14]
             }
         else:
             return None
@@ -172,6 +188,13 @@ class AdminDataManager:
             return {"id": admin_data[0], "username": admin_data[1], "password": admin_data[2], "key": admin_data[3]}
         else:
             return None
+        
+    def get_all_usernames(self) -> List[str]:
+        # 获取所有用户名
+        sql_query = "SELECT username FROM Admins"
+        self.cursor.execute(sql_query)
+        return [row[0] for row in self.cursor.fetchall()]
+
 
     def update_user_data_by_username(self, username, new_password, new_key=None):
         if new_key is None:
@@ -219,6 +242,10 @@ if __name__ in "__main__":
 
     manager = AdminDataManager()
     # manager.insert_new_user("2546947442", "sagiri0915", CreateKey())
-    print(manager.get_user_data_by_username("PYmili"))
-    print(manager.get_user_data_by_username("admin"))
-    print(manager.get_user_data_by_username("2546947442"))
+    # manager.insert_new_user("kk", "114514", CreateKey())
+    # manager.insert_new_user("mydqc", "0123456789", CreateKey())
+    input_data = input("Input new username and password: ").split()
+    if input_data: 
+        manager.insert_new_user(input_data[0], input_data[-1], CreateKey())
+    print("All User:", end="\n\t")
+    print("\n\t".join(manager.get_all_usernames()))
