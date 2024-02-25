@@ -249,6 +249,7 @@ def questionaire_upload():
         result['content'] = reason_result
         return result
 
+    AuditCode = CreateKey(length=10)
     MinecraftUserData = {
         "username": request.json.get("username"),
         "game_name": request.json.get("gameName"),
@@ -261,7 +262,8 @@ def questionaire_upload():
         "technical_direction": request.json.get("technicalDirection"),
         "email": email,
         "questionnaire_answers": ";".join([key+"用户回答："+value for key, value in save_questions.items()]),
-        "reviewed_by": "暂未通过审核"
+        "reviewed_by": "暂未通过审核",
+        "audit_code": AuditCode
     }
     manager = MinecraftWhitelistManager()
     insert_result = manager.insert_data(MinecraftUserData)
@@ -271,7 +273,7 @@ def questionaire_upload():
         return result
     
     result["code"] = 200
-    result["content"] = "通过 AI 审核，后续管理员会进行白名单给予，请耐心等待！"
+    result["content"] = "通过 AI 审核，后续管理员会进行白名单给予，注意你的邮箱信息，耐心等待！"
 
     # 邮件提醒管理员
     email_event = EmailEvent()
@@ -282,8 +284,8 @@ def questionaire_upload():
         <body>
             <p>用户名：{request.json.get('username')}</p>
             <p>游戏名：{request.json.get('username')}</p>
-            <p>已为您生成一个随机邀请码：{CreateKey(length=10)}</p>
-            <p><a href="http://www.pymili-blog.icu:8888/user_information">请您进行二次审核（点击跳转）</a></p>
+            <p>已为您生成一个随机邀请码：{AuditCode}</p>
+            <p><a href="https://question.pymili-blog.icu/user_information">请您进行二次审核（点击跳转）</a></p>
         </body>
         </html>
         """
@@ -335,6 +337,40 @@ def passed_second_review():
         result['content'] = "给予成功，但添加审核人名称错误！"
         return result
     
+    manager = MinecraftWhitelistManager()
+    get_by_result = manager.get_data_by_username(username)
+    manager.close_connection()
+    if not get_by_result:
+        result['content'] = "数据错误！"
+        return result
+    
+    email_event = EmailEvent()
+    email_event.setSubject("您已通过二次审核！")
+    email_event.setContent(content_html=f"""
+    <html>
+    <body>
+        <h1>您已通过本服审核，请按照如下步骤进入服务器</h1>
+        <ul>
+            <li>1.立即回复审核员，代表您已知悉。</li>
+            <li>
+                2.添加服务器群。（进群问题审核号码请按规填写）
+                <br>服务器交流群:850393979
+                <br>审核号码:{get_by_result['audit_code']}
+                <br>随后审核群可自行退出。群号请自觉保密，禁止外泄。
+            </li>
+            <li>3.获取白名单。</li>
+            <p>请私聊群主发送您的游戏ID及主要用于进入游戏的版本（JE/BE),若您两个版本皆有账号，请分别将ID发送并注明对应版本。</p>
+            <hr>
+            <p>不要一直催，服主在现实很忙，有自己更重要的事情做。12h以内一定给你。</p>
+            <p>入群请关注群公告，群文件。尤其是服务器规则，请务必熟识。</p>
+        </ul>
+    <body>
+    </html>
+    """)
+    if email_event.send(receivers=[get_by_result['email']]) is False:
+        result['content'] = "发送邮件失败！"
+        return result
+
     result['code'] = 200
     result['content'] = "给予成功！"
     return result

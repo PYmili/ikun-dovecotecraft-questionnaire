@@ -32,7 +32,8 @@ class MinecraftWhitelistManager:
                 email TEXT UNIQUE, -- 邮箱
                 passed_second_review TEXT DEFAULT 'No',  -- 是否被审核员通过
                 questionnaire_answers TEXT,  -- 用户问答数据
-                reviewed_by TEXT -- 将用户通过审核的人
+                reviewed_by TEXT, -- 将用户通过审核的人
+                audit_code TEXT NOT NULL -- 进群审核码
             );
         '''
         self.cursor.execute(sql_create_table)
@@ -51,8 +52,8 @@ class MinecraftWhitelistManager:
         values_tuple = tuple(values)
         sql_insert = '''
             INSERT INTO users (username, game_name, qq_number, has_official_account, current_status,
-                review_channel, friend_qq_number, playtime, technical_direction, email, questionnaire_answers, reviewed_by) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+                review_channel, friend_qq_number, playtime, technical_direction, email, questionnaire_answers, reviewed_by, audit_code) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
         '''
         try:
             self.cursor.execute(sql_insert, values_tuple)
@@ -130,7 +131,8 @@ class MinecraftWhitelistManager:
                 "email": user_data[11],
                 "passed_second_review": user_data[12],
                 "questionnaire_answers": user_data[13],
-                "reviewed_by": user_data[14]
+                "reviewed_by": user_data[14],
+                "audit_code": user_data[15]
             }
         else:
             return None
