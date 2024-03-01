@@ -205,16 +205,22 @@ def questionaire_upload():
     email = request.json.get("email")
     verificationCode = request.json.get("verificationCode")
     if not all([email, verificationCode]):
-        result['content'] = "未填写email"
+        result['content'] = "未填写email地址或验证码"
         return result
     vcs = VerificationCodeService()
     verify_bool, verify_content = vcs.verify_code(email_adder=email, provided_code=verificationCode)
     if verify_bool is False:
         result['content'] = verify_content
         return result
+    
     manager = MinecraftWhitelistManager()
     if manager.is_email_registered(email) is True:
+        manager.close_connection()
         result['content'] = "邮箱已注册过！"
+        return result
+    if manager.get_data_by_username(username=request.json.get("username")):
+        manager.close_connection()
+        result["content"] = "用户已注册，请勿重复提交！"
         return result
     manager.close_connection()
     
@@ -307,10 +313,12 @@ def passed_second_review():
         "content": "参数错误！"
     }
     if not all([request.json, request.cookies]):
+        result['content'] = "参数缺失"
         return result
     
     username = request.json.get("username")
     if not username:
+        result['content'] = "管理员信息错误！"
         return result
     
     reviewer_name = request.cookies.get("username")
@@ -336,6 +344,7 @@ def passed_second_review():
     if reviewer_result is False:
         result['content'] = "给予成功，但添加审核人名称错误！"
         return result
+    manager.close_connection()
     
     manager = MinecraftWhitelistManager()
     get_by_result = manager.get_data_by_username(username)
@@ -351,14 +360,13 @@ def passed_second_review():
     <body>
         <h1>您已通过本服审核，请按照如下步骤进入服务器</h1>
         <ul>
-            <li>1.立即回复审核员，代表您已知悉。</li>
             <li>
-                2.添加服务器群。（进群问题审核号码请按规填写）
+                1.添加服务器群。（进群问题审核号码请按规填写）
                 <br>服务器交流群:850393979
                 <br>审核号码:{get_by_result['audit_code']}
                 <br>随后审核群可自行退出。群号请自觉保密，禁止外泄。
             </li>
-            <li>3.获取白名单。</li>
+            <li>2.获取白名单。</li>
             <p>请私聊群主发送您的游戏ID及主要用于进入游戏的版本（JE/BE),若您两个版本皆有账号，请分别将ID发送并注明对应版本。</p>
             <hr>
             <p>不要一直催，服主在现实很忙，有自己更重要的事情做。12h以内一定给你。</p>
@@ -373,6 +381,57 @@ def passed_second_review():
 
     result['code'] = 200
     result['content'] = "给予成功！"
+    return result
+
+
+@app.route("/not_passed_second_review", methods=["POST"])
+def not_passed_second_review():
+    """不通过二次审核"""
+    result = {
+        "code": 400,
+        "content": "参数错误！"
+    }
+    if not all([request.json, request.cookies]):
+        return result
+    
+    username = request.json.get("username")
+    admin_name = request.cookies.get("username")
+    if not all([username, admin_name]):
+        result['content'] = "用户名或管理员名称错误！"
+        return result
+    
+    manager = MinecraftWhitelistManager()
+    email = manager.get_data_by_username(username)['email']
+
+    if username not in manager.get_all_usernames():
+        result['content'] = "用户不存在！"
+        return result
+    
+    delete_result = manager.delete_user_by_identifier(username)
+    if delete_result is False:
+        result['content'] = "失败！"
+        return result
+    manager.close_connection()
+    
+    email_event = EmailEvent()
+    email_event.setSubject("鸽子窝，二审未通过。")
+    email_event.setContent(content_html=f"""
+    <html>
+        <body>
+            <h1 style="color: red;">二审未通过！</h1>
+            <p>您的二次审核被：<admin style="color: blue;">{admin_name}</admin> 驳回。</p>
+            <p>可以重新填写问卷，请认真仔细填写问卷！</p>
+        </body>
+    </html>
+    """)
+    send_result = email_event.send(receivers=[email])
+    if send_result is False:
+        result['code'] = 200
+        result['content'] = "用户已删除，但邮件发送失败！"
+        return result
+    
+    result["code"] = 200
+    result["content"] = "成功！"
     return result
 
 

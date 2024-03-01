@@ -50,7 +50,8 @@
             <div class="user-card">
                 <p>用户名: <span>{{ ngwli['username'] }}</span></p>
                 <p>游戏名: <span>{{ ngwli['game_name'] }}</span></p>
-                <p><a href="{{ ngwli['username'] }}">给予通过</a></p>
+                <p><a href="{{ ngwli['username'] }}" id="give_pass">给予通过</a></p>
+                <p><a href="{{ ngwli['username'] }}" id="not_pass">不通过</a></p>
                 <!-- 其他信息默认隐藏 -->
                 <div class="additional-info hidden">
                     <p>qq号: <span>{{ ngwli['qq_number'] }}</span></p>

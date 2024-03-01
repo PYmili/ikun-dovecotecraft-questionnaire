@@ -43,41 +43,73 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     });
 
-    // 获取所有给予白名单链接
-    var giveWhitelistLinks = document.querySelectorAll('#secondary_review .user-card a');
+    // 给予通过与不通过
+    var giveSecondReviewLinks = document.querySelectorAll('#give_pass');
+    var notGiveSecondReviewLinks = document.querySelectorAll('#not_pass');
 
-    // 为每个给予白名单链接添加点击事件监听器
-    giveWhitelistLinks.forEach(function(link) {
+    // 给予通过链接添加点击事件监听器
+    giveSecondReviewLinks.forEach(function(link) {
         link.addEventListener('click', function(event) {
             event.preventDefault();
-            
-            // 获取链接的 href 值作为用户名
+
+            let result = confirm('您确定给予通过吗？');
+            if (!result) {
+                return;
+            }
+
             var username = this.getAttribute('href');
-            
-            // 发送请求给予白名单
-            fetch('/passed_second_review', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    username: username
-                })
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
-            .then(data => {
-                // 处理响应
-                location.reload(true);
-                alert(data['content']);
-            })
-            .catch(error => {
-                console.error('There was a problem with your fetch operation:', error);
-            });
+            if (!username) {
+                alert("获取当前用户名错误！");
+                return;
+            }
+
+            handleReview(username, '/passed_second_review');
+        });
+    });
+
+    // 不给予通过链接添加点击事件监听器
+    notGiveSecondReviewLinks.forEach(function(link) {
+        link.addEventListener('click', function(event) {
+            event.preventDefault();
+
+            let result = confirm('您确定不给予通过吗？');
+            if (!result) {
+                return;
+            }
+
+            var username = this.getAttribute('href');
+            if (!username) {
+                alert("获取当前用户名错误！");
+                return;
+            }
+
+            handleReview(username, '/not_passed_second_review');
         });
     });
 });
+
+function handleReview(username, apiEndpoint) {
+    fetch(apiEndpoint, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            username: username
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        // 处理响应
+        location.reload(true);
+        alert(data['content']);
+    })
+    .catch(error => {
+        console.error('There was a problem with your fetch operation:', error);
+    });
+}

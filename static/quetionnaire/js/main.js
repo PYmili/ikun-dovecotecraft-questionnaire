@@ -42,8 +42,6 @@ const submitButton = document.getElementById('submit_button');
 submitButton.addEventListener('click', function(event) {
     // 阻止表单默认提交行为
     event.preventDefault();
-
-    showLoadingMessage()
     // 获取表单中的值
     const username = document.getElementById('username').value;
     const gameName = document.getElementById('game_name').value;
@@ -61,6 +59,14 @@ submitButton.addEventListener('click', function(event) {
     const reason = document.getElementById('reason').value;
     const questions = document.querySelectorAll('[id^="question"]');
 
+    if (!username || !gameName || !qqNumber || !reviewChannel || !email ||
+         !verificationCode || !hasOfficialAccount || !currentStatus || !technicalDirection 
+         || !playtime || !selfIntroduction || !reason) {
+            alert("请检查是否填写完整！");
+            return;
+    }
+
+    showLoadingMessage()
     // 在这里执行提交操作，例如将获取到的值发送到服务器等
     console.log('用户名:', username);
     console.log('游戏名:', gameName);

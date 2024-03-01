@@ -12,13 +12,13 @@ IMAP_SMTP_CODE = "ROHNIVYQBGGMOVWG"
 SMTP_SERVER = "smtp.163.com"
 
 RECEIVERS = [
-    "2663210946@qq.com",
-    "1909687319@qq.com",
-    "1752073141@qq.com",
-    "1430942558@qq.com",
-    "341692320@qq.com",
-    "1732835072@qq.com",
-    "3452476291@qq.com",
+    # "2663210946@qq.com",
+    # "1909687319@qq.com",
+    # "1752073141@qq.com",
+    # "1430942558@qq.com",
+    # "341692320@qq.com",
+    # "1732835072@qq.com",
+    # "3452476291@qq.com",
     "2097632843@qq.com"
 ]
 

@@ -148,6 +148,18 @@ class MinecraftWhitelistManager:
         sql_query = "SELECT username FROM users"
         self.cursor.execute(sql_query)
         return [row[0] for row in self.cursor.fetchall()]
+    
+    def delete_user_by_identifier(self, identifier: str, by_username: bool=True) -> bool:
+        # 根据用户名或游戏名删除用户
+        try:
+            column_name = "username" if by_username else "game_name"
+            sql_delete = f"DELETE FROM users WHERE {column_name} = ?"
+            self.cursor.execute(sql_delete, (identifier,))
+            self.conn.commit()
+            return True
+        except Exception as e:
+            logger.error(f"删除标识符为 {identifier} 的用户时发生错误: {e}")
+            return False
 
     def close_connection(self) -> None:
         self.conn.close()
