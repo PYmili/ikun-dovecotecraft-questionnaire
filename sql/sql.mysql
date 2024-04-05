@@ -1,0 +1,21 @@
+USE ikun_questionnaire;
+CREATE TABLE IF NOT EXISTS users (
+    user_id INTEGER PRIMARY KEY AUTO_INCREMENT, -- 用户id
+    username VARCHAR(255) NOT NULL UNIQUE, -- 用户名
+    game_name VARCHAR(255) NOT NULL, -- 游戏名
+    registration_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- 注册时间
+    qq_number INTEGER, -- QQ号
+    has_official_account BOOLEAN, -- 是否持有官方账户，改为布尔类型
+    current_status VARCHAR(255), -- 当前状态
+    review_channel VARCHAR(255), -- 来自哪里
+    friend_qq_number INTEGER, -- 推荐人qq
+    playtime INTEGER, -- 已玩游戏多久了
+    technical_direction VARCHAR(255), -- 技术方向
+    email VARCHAR(255) NOT NULL UNIQUE, -- 邮箱
+    passed_second_review BOOLEAN DEFAULT FALSE,  -- 是否被审核员通过，改为布尔类型
+    questionnaire_answers TEXT,  -- 用户问答数据
+    reviewed_by VARCHAR(255), -- 将用户通过审核的人
+    audit_code VARCHAR(255) NOT NULL -- 进群审核码
+);
+
+SHOW TABLES;

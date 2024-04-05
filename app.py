@@ -1,3 +1,4 @@
+import sys
 import os
 import json
 
@@ -436,6 +437,10 @@ def not_passed_second_review():
 
 
 if __name__ in "__main__":
+    logger.add("log/app.log", rotation="500 MB", level="DEBUG")
+
+    # 在控制台输出日志，添加以下配置：
+    logger.add(sys.stdout, level="DEBUG")
     app.run(
         host="0.0.0.0",
         port="8888",
