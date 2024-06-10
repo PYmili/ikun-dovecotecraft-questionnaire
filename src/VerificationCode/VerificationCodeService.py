@@ -6,6 +6,9 @@ import string
 
 from . import send
 
+generatedCodesJson = os.path.join(os.getcwd(), "generated_codes.json")
+
+
 class VerificationCodeService:
     def __init__(self, code_length=6, valid_duration=1800):
         """
@@ -18,11 +21,11 @@ class VerificationCodeService:
 
         # 发送历史缓存
         self.generated_codes = {}
-        if os.path.isfile("generated_codes.json") is False:
-            with open("generated_codes.json", "w+", encoding="utf-8") as wfp:
+        if os.path.isfile(generatedCodesJson) is False:
+            with open(generatedCodesJson, "w+", encoding="utf-8") as wfp:
                 wfp.write("{}")
         
-        with open("generated_codes.json", mode="r", encoding="utf-8") as rfp:
+        with open(generatedCodesJson, mode="r", encoding="utf-8") as rfp:
             self.generated_codes = json.loads(rfp.read())
 
     def generate_code(self) -> str:
@@ -44,7 +47,7 @@ class VerificationCodeService:
         # 发送邮件如果成功则保存。
         send_result = send.sendEmailVerufucationCode(to_email_adder, code)
         if send_result is True:
-            with open("generated_codes.json", mode="w+", encoding="utf-8") as wfp:
+            with open(generatedCodesJson, mode="w+", encoding="utf-8") as wfp:
                 wfp.write(json.dumps(self.generated_codes, indent=4))
         
         return send_result
@@ -69,13 +72,3 @@ class VerificationCodeService:
             return True, "验证码正确！"
         else:
             return False, "验证码错误！"
-
-
-if __name__ in "__main__":
-    # 使用示例
-    service = VerificationCodeService()
-    send_result = service.send_code('2097632843@qq.com')
-    if send_result is True:
-        print("发送成功！")
-    else:
-        print("发送失败！")

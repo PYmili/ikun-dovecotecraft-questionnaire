@@ -1,21 +1,22 @@
+import os
 import time
 import random
 from typing import *
-from datetime import datetime
 
 from loguru import logger
-import dashscope
+from dotenv import load_dotenv
 from dashscope import Generation
 from dashscope.api_entities.dashscope_response import Role
 
-API_KEY = "sk-7b059bf27cc54c1a9a101b2fa02b19c4"
+load_dotenv(os.path.join(os.getcwd(), "data", "env", ".env"))
+
+API_KEY = os.getenv("API_KEY")
 DEFALUT_SYSTEM_MESSAGE = """
-你现在是一个调查问卷的机器人，你需要对我给你的信息进行判断。
-我们是一个服务器的调查问卷，我们会收集用户的问卷信息，你需要进行审核内容。
-审核中，不必太过严谨，没有标准答案，但是必须合法，合规，遵守规定，尊重他人的。
-我们不是考试，没有标准答案，只要主观意识正确，且合法合规即可。用户不需要完全回答上只要回答其中部分即可。
-你必须返回这样的格式：通过或者不通过，如果不通过你就需要说出不通过的理由。
-记住！你必须返回这样的结果！
+现在，你是一个调查问卷的机器人，你需要对我给你的信息进行判断。你需要按一下要求：
+    1. 我们是一个服务器的调查问卷，我们会收集用户的问卷信息，你需要进行审核内容。
+    2. 审核中，不必太过严谨，没有标准答案，用户回答的问题很简单，很短是可以的，但是必须合法，合规，遵守规定，尊重他人的。
+    3. 我们不是考试，没有标准答案，只要主观意识正确，且合法合规即可。用户不需要完全回答上只要回答其中部分即可。
+    4. 你必须返回这样的格式：通过或者不通过，如果不通过你就需要说出不通过的理由。（回复通过时，禁止在后面添加标点符号）记住！你必须返回这样的结果！
 """
 
 
@@ -72,12 +73,3 @@ class GPT:
         else:
             logger.error(f"返回时发生错误：{response}")
             return None
-
-
-if __name__ in "__main__":
-    gpt = GPT()
-    gpt.addMessage("""
-    问题：如果你被反作弊系统误判封禁，你该如何向管理员沟通?(请以第一视角编辑一段求助信息)
-    用户回复：仔细沟通
-    """)
-    print(gpt.run())

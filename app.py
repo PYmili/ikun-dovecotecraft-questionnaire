@@ -9,21 +9,21 @@ from flask import make_response
 from flask import render_template
 from loguru import logger
 
-import questionaire_gpt
-from methods import CreateKey
-from SQLiteMethods import MinecraftWhitelistManager, AdminDataManager
-from VerificationCode import VerificationCodeService, EmailEvent
+from src import CreateKey
+from src.ai import questionaire_ai
+from src.database import MinecraftPlayerListManager, AdminDataManager
+from src.VerificationCode import VerificationCodeService, EmailEvent
 
 app = Flask(
     __name__,
     static_folder="static",
     template_folder="templates"
     )
-QUESTION_JSON_PATH = os.path.join(os.getcwd(), "questions.json")
+QUESTION_JSON_PATH = os.path.join(os.getcwd(), "data", "json", "questions.json")
 
 
 def GPT_Event(problem: str, reply: str) -> str:
-    gpt = questionaire_gpt.GPT()
+    gpt = questionaire_ai.GPT()
     gpt.addMessage(
         f"{problem}\n用户回答：{reply}"
     )
@@ -82,20 +82,16 @@ def user_information():
         return redirect("/login")
     
     userInformations = []
-    noPassedSecondReviewInformations = []
-    white_manager = MinecraftWhitelistManager()
-    for user in white_manager.get_all_usernames():
-        white_result = white_manager.get_data_by_username(user)
-        if not white_result:
+    manager = MinecraftPlayerListManager()
+    for user in manager.get_all_usernames():
+        result = manager.get_data_by_username(user)
+        if not result:
             continue
-        if white_result['passed_second_review'] == "No":
-            noPassedSecondReviewInformations.append(white_result)
-        userInformations.append(white_result)
-    white_manager.close_connection()
+        userInformations.append(result)
+    manager.close_connection()
     return render_template(
         "UserInformation.html",
-        userInformations=userInformations,
-        noPassedSecondReviewInformations=noPassedSecondReviewInformations
+        userInformations=userInformations
     )
 
 
@@ -192,7 +188,7 @@ def sendVerificationCode():
 
 
 @app.route("/questionaire_upload", methods=["POST"])
-def questionaire_upload():
+def questionaireUpload():
     """
     上传数据api
     """
@@ -214,7 +210,7 @@ def questionaire_upload():
         result['content'] = verify_content
         return result
     
-    manager = MinecraftWhitelistManager()
+    manager = MinecraftPlayerListManager()
     if manager.is_email_registered(email) is True:
         manager.close_connection()
         result['content'] = "邮箱已注册过！"
@@ -234,7 +230,7 @@ def questionaire_upload():
             question_result = GPT_Event(
                 QUESTIONS[count], f"用户：" + question_value
             )
-            if question_result != "通过":
+            if question_result.strip("。") != "通过":
                 result["content"] = f"问题：{QUESTIONS[count]}\n未通过原因：" + question_result
                 return result
             
@@ -269,10 +265,9 @@ def questionaire_upload():
         "technical_direction": request.json.get("technicalDirection"),
         "email": email,
         "questionnaire_answers": ";".join([key+"用户回答："+value for key, value in save_questions.items()]),
-        "reviewed_by": "暂未通过审核",
         "audit_code": AuditCode
     }
-    manager = MinecraftWhitelistManager()
+    manager = MinecraftPlayerListManager()
     insert_result = manager.insert_data(MinecraftUserData)
     manager.close_connection()
     if insert_result is False:
@@ -280,19 +275,20 @@ def questionaire_upload():
         return result
     
     result["code"] = 200
-    result["content"] = "通过 AI 审核，后续管理员会进行白名单给予，注意你的邮箱信息，耐心等待！"
+    result["content"] = "通过 AI 审核，请注意你的邮箱信息，耐心等待管理员同意！"
+    result["auditCode"] = AuditCode
 
     # 邮件提醒管理员
     email_event = EmailEvent()
-    email_event.setSubject(f"用户：{request.json.get('username')}，通过验证。")
+    email_event.setSubject(f"用户：{request.json.get('username')}，通过AI验证。")
     email_event.setContent(
         content_html=f"""
         <html>
         <body>
             <p>用户名：{request.json.get('username')}</p>
             <p>游戏名：{request.json.get('username')}</p>
-            <p>已为您生成一个随机邀请码：{AuditCode}</p>
-            <p><a href="https://question.pymili-blog.icu/user_information">请您进行二次审核（点击跳转）</a></p>
+            <p>邀请码：{AuditCode}</p>
+            <p><a href="https://question.pymili-blog.icu/user_information">查看用户信息（点击跳转）</a></p>
         </body>
         </html>
         """
@@ -304,67 +300,44 @@ def questionaire_upload():
     return result
 
 
-@app.route("/passed_second_review", methods=["POST"])
-def passed_second_review():
+@app.route("/pass", methods=["POST"])
+def passEvent():
     """
-    给予用户二次审核通过
+    给予用户通过
     """
-    result = {
-        "code": 400,
-        "content": "参数错误！"
-    }
-    if not all([request.json, request.cookies]):
-        result['content'] = "参数缺失"
+    result = {"code": 400}
+    
+    userName = request.json.get("user_name")
+    auditCode = request.json.get("audit_code")
+    if not all([userName, auditCode]):
+        result['content'] = "用户信息错误！"
+        logger.warning(result["content"])
         return result
     
-    username = request.json.get("username")
-    if not username:
-        result['content'] = "管理员信息错误！"
-        return result
-    
-    reviewer_name = request.cookies.get("username")
-    if not reviewer_name:
-        result['content'] = "cookies错误，非法操作！"
-        return result
-    
-    manager = MinecraftWhitelistManager()
-    get_result = manager.get_data_by_username(username)
+    manager = MinecraftPlayerListManager()
+    get_result = manager.get_data_by_username(userName)
     if not get_result:
         manager.close_connection()
         result['content'] = "用户不存在！"
+        logger.warning(result["content"])
         return result
-    
-    modify_result = manager.modify_passed_second_review_status_by_username(username, "Yes")
-    manager.close_connection()
-    if not modify_result:
-        result['content'] = "服务器错误！"
-        return result
-    
-    manager = MinecraftWhitelistManager()
-    reviewer_result = manager.add_reviewer_name(username=username, reviewer_name=reviewer_name)
-    if reviewer_result is False:
-        result['content'] = "给予成功，但添加审核人名称错误！"
-        return result
-    manager.close_connection()
-    
-    manager = MinecraftWhitelistManager()
-    get_by_result = manager.get_data_by_username(username)
-    manager.close_connection()
-    if not get_by_result:
-        result['content'] = "数据错误！"
+    if get_result.get("audit_code") != auditCode:
+        manager.close_connection()
+        result["content"] = "审核码错误！"
+        logger.warning("审核码错误！")
         return result
     
     email_event = EmailEvent()
-    email_event.setSubject("您已通过二次审核！")
+    email_event.setSubject("您已通过AI审核！")
     email_event.setContent(content_html=f"""
     <html>
     <body>
-        <h1>您已通过本服审核，请按照如下步骤进入服务器</h1>
+        <h1>您已通过本服AI审核，请按照如下步骤进入服务器</h1>
         <ul>
             <li>
                 1.添加服务器群。（进群问题审核号码请按规填写）
-                <br>服务器交流群:850393979
-                <br>审核号码:{get_by_result['audit_code']}
+                <br>服务器交流群: 934996287
+                <br>审核号码: {get_result['audit_code']}
                 <br>随后审核群可自行退出。群号请自觉保密，禁止外泄。
             </li>
             <li>2.获取白名单。</li>
@@ -372,67 +345,20 @@ def passed_second_review():
             <hr>
             <p>不要一直催，服主在现实很忙，有自己更重要的事情做。12h以内一定给你。</p>
             <p>入群请关注群公告，群文件。尤其是服务器规则，请务必熟识。</p>
+            <p>PYmili在此恭喜你，加入我们！</p>
         </ul>
     <body>
     </html>
     """)
-    if email_event.send(receivers=[get_by_result['email']]) is False:
+    if email_event.send(receivers=[get_result['email']]) is False:
         result['content'] = "发送邮件失败！"
+        logger.warning(result["content"])
         return result
+    
+    logger.info(f"给予用户: {userName} 通过")
 
     result['code'] = 200
-    result['content'] = "给予成功！"
-    return result
-
-
-@app.route("/not_passed_second_review", methods=["POST"])
-def not_passed_second_review():
-    """不通过二次审核"""
-    result = {
-        "code": 400,
-        "content": "参数错误！"
-    }
-    if not all([request.json, request.cookies]):
-        return result
-    
-    username = request.json.get("username")
-    admin_name = request.cookies.get("username")
-    if not all([username, admin_name]):
-        result['content'] = "用户名或管理员名称错误！"
-        return result
-    
-    manager = MinecraftWhitelistManager()
-    email = manager.get_data_by_username(username)['email']
-
-    if username not in manager.get_all_usernames():
-        result['content'] = "用户不存在！"
-        return result
-    
-    delete_result = manager.delete_user_by_identifier(username)
-    if delete_result is False:
-        result['content'] = "失败！"
-        return result
-    manager.close_connection()
-    
-    email_event = EmailEvent()
-    email_event.setSubject("鸽子窝，二审未通过。")
-    email_event.setContent(content_html=f"""
-    <html>
-        <body>
-            <h1 style="color: red;">二审未通过！</h1>
-            <p>您的二次审核被：<admin style="color: blue;">{admin_name}</admin> 驳回。</p>
-            <p>可以重新填写问卷，请认真仔细填写问卷！</p>
-        </body>
-    </html>
-    """)
-    send_result = email_event.send(receivers=[email])
-    if send_result is False:
-        result['code'] = 200
-        result['content'] = "用户已删除，但邮件发送失败！"
-        return result
-    
-    result["code"] = 200
-    result["content"] = "成功！"
+    result['content'] = "success"
     return result
 
 

@@ -161,3 +161,6 @@ cython_debug/
 
 # db
 *.db
+
+# all env
+env/

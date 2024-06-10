@@ -1,26 +1,22 @@
 import random
+import os
 import time
 import ssl
 import smtplib
+from dotenv import load_dotenv
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.header import Header
 from loguru import logger
 
+load_dotenv(os.path.join(os.getcwd(), "data", "env", ".env"))
+
 SENDER = "mc2005wj@163.com"
-IMAP_SMTP_CODE = "ROHNIVYQBGGMOVWG"
+IMAP_SMTP_CODE = os.getenv("IMAP_SMTP_CODE")
 SMTP_SERVER = "smtp.163.com"
 
 RECEIVERS = [
-    # "2663210946@qq.com",
-    # "1909687319@qq.com",
-    # "1752073141@qq.com",
-    # "1430942558@qq.com",
-    # "341692320@qq.com",
-    # "1732835072@qq.com",
-    # "3452476291@qq.com",
-    # "2097632843@qq.com",
-    "mc2005wj@163.com"
+    "2097632843@qq.com"
 ]
 
 
@@ -93,7 +89,7 @@ def sendEmailVerufucationCode(receiver: str, code: str) -> bool:
     msg = MIMEMultipart()
     msg['From'] = Header(SENDER)
     msg['To'] = Header(receiver)
-    msg['Subject'] = Header("来自鸽子窝服务器的邮箱验证码", 'utf-8')  # 邮件主题，支持中文
+    msg['Subject'] = Header("邮箱验证码", 'utf-8')  # 邮件主题，支持中文
 
     # 邮件正文内容
     text_content = f"这是你的邮箱验证码：{code}"
@@ -122,10 +118,3 @@ def sendEmailVerufucationCode(receiver: str, code: str) -> bool:
 
     finally:
         server.quit()
-
-
-if __name__ in "__main__":
-    email_event = EmailEvent()
-    email_event.setSubject("来自PYmili的测试！")
-    email_event.setContent("此次为测试内容！")
-    print(email_event.send(SENDERS))

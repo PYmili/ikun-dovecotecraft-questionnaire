@@ -12,7 +12,6 @@
             <h2>菜单</h2>
             <ul>
                 <li><a href="#success">已通过用户</a></li>
-                <li><a href="#secondary_review">待二次审核</a></li>
             </ul>
         </div>
         <section id="success" class="content">
@@ -32,41 +31,11 @@
                     <p>从哪里来: <span>{{ information['review_channel'] }}</span></p>
                     <p>玩mc多久: <span>{{ information['playtime'] }}</span></p>
                     <p>擅长领域: <span>{{ information['technical_direction'] }}</span></p>
-                    <p>审核人: <span>{{ information['reviewed_by'] }}</span></p>
                     <p>审核码: <span>{{ information['audit_code'] }}</span></p>
                     {% for questionnaire_answers in information['questionnaire_answers'].split(';') %}
                     <p>问答: 
                         <span>{{ questionnaire_answers.split('用户回答：')[0] }}</span><br>
                         <span style="color: blue;">用户回答：{{ questionnaire_answers.split('用户回答：')[1] }}</span>
-                    </p>
-                    {% endfor %}
-                </div>
-            </div>
-            {% endfor %}
-        </section>
-        <section id="secondary_review" class="content">
-            <h1>待二次审核</h1>
-            {% for ngwli in noPassedSecondReviewInformations %}
-            <div class="user-card">
-                <p>用户名: <span>{{ ngwli['username'] }}</span></p>
-                <p>游戏名: <span>{{ ngwli['game_name'] }}</span></p>
-                <p><a href="{{ ngwli['username'] }}" id="give_pass">给予通过</a></p>
-                <p><a href="{{ ngwli['username'] }}" id="not_pass">不通过</a></p>
-                <!-- 其他信息默认隐藏 -->
-                <div class="additional-info hidden">
-                    <p>qq号: <span>{{ ngwli['qq_number'] }}</span></p>
-                    <p>邮箱: <span>{{ ngwli['email'] }}</span></p>
-                    <p>推荐人: <span>{{ ngwli['friend_qq_number'] }}</span></p>
-                    <p>注册时间: <span>{{ ngwli['registration_time'] }}</span></p>
-                    <p>正版账号: <span>{{ ngwli['has_official_account'] }}</span></p>
-                    <p>当前状态: <span>{{ ngwli['current_status'] }}</span></p>
-                    <p>从哪里来: <span>{{ ngwli['review_channel'] }}</span></p>
-                    <p>玩mc多久: <span>{{ ngwli['playtime'] }}</span></p>
-                    <p>擅长领域: <span>{{ ngwli['technical_direction'] }}</span></p>
-                    {% for ngwki_answer in ngwli['questionnaire_answers'].split(';') %}
-                    <p>问答: 
-                        <span>{{ ngwki_answer.split('用户回答：')[0] }}</span><br>
-                        <span style="color: blue;">用户回答：{{ ngwki_answer.split('用户回答：')[1] }}</span>
                     </p>
                     {% endfor %}
                 </div>

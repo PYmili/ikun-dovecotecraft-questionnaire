@@ -42,50 +42,6 @@ document.addEventListener("DOMContentLoaded", function() {
             targetSection.style.display = 'block';
         });
     });
-
-    // 给予通过与不通过
-    var giveSecondReviewLinks = document.querySelectorAll('#give_pass');
-    var notGiveSecondReviewLinks = document.querySelectorAll('#not_pass');
-
-    // 给予通过链接添加点击事件监听器
-    giveSecondReviewLinks.forEach(function(link) {
-        link.addEventListener('click', function(event) {
-            event.preventDefault();
-
-            let result = confirm('您确定给予通过吗？');
-            if (!result) {
-                return;
-            }
-
-            var username = this.getAttribute('href');
-            if (!username) {
-                alert("获取当前用户名错误！");
-                return;
-            }
-
-            handleReview(username, '/passed_second_review');
-        });
-    });
-
-    // 不给予通过链接添加点击事件监听器
-    notGiveSecondReviewLinks.forEach(function(link) {
-        link.addEventListener('click', function(event) {
-            event.preventDefault();
-
-            let result = confirm('您确定不给予通过吗？');
-            if (!result) {
-                return;
-            }
-
-            var username = this.getAttribute('href');
-            if (!username) {
-                alert("获取当前用户名错误！");
-                return;
-            }
-
-            handleReview(username, '/not_passed_second_review');
-        });
-    });
 });
 
 function handleReview(username, apiEndpoint) {

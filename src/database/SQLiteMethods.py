@@ -4,11 +4,11 @@ from typing import List, Any, Dict
 
 from loguru import logger
 
-MinecraftWhitelistManagerDB = os.path.join(os.getcwd(), "db", "minecraft_whitelist.db")
-MinecraftAdminUserDB = os.path.join(os.getcwd(), "db", "admin.db")
+MinecraftWhitelistManagerDB = os.path.join(os.getcwd(), "data", "db", "minecraft_whitelist.db")
+MinecraftAdminUserDB = os.path.join(os.getcwd(), "data", "db", "admin.db")
 
 
-class MinecraftWhitelistManager:
+class MinecraftPlayerListManager:
     def __init__(self, db_name: str=MinecraftWhitelistManagerDB) -> None:
         self.conn = sqlite3.connect(db_name)
         self.cursor = self.conn.cursor()
@@ -18,8 +18,7 @@ class MinecraftWhitelistManager:
         # 用户表
         sql_create_table = '''
             CREATE TABLE IF NOT EXISTS users (
-                user_id INTEGER PRIMARY KEY AUTOINCREMENT, -- 用户id
-                username TEXT NOT NULL, -- 用户名
+                username TEXT NOT NULL PRIMARY KEY, -- 用户名
                 game_name TEXT NOT NULL, -- 游戏名
                 registration_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- 注册时间
                 qq_number INTEGER, -- QQ号
@@ -30,9 +29,7 @@ class MinecraftWhitelistManager:
                 playtime INTEGER, -- 已玩游戏多久了
                 technical_direction TEXT, -- 技术方向
                 email TEXT UNIQUE, -- 邮箱
-                passed_second_review TEXT DEFAULT 'No',  -- 是否被审核员通过
                 questionnaire_answers TEXT,  -- 用户问答数据
-                reviewed_by TEXT, -- 将用户通过审核的人
                 audit_code TEXT NOT NULL -- 进群审核码
             );
         '''
@@ -46,14 +43,15 @@ class MinecraftWhitelistManager:
         values = []
         for value in data_dict.values():
             if value is None:
-                values.append("空")
+                values.append("NULL")
             values.append(value)
         
         values_tuple = tuple(values)
         sql_insert = '''
             INSERT INTO users (username, game_name, qq_number, has_official_account, current_status,
-                review_channel, friend_qq_number, playtime, technical_direction, email, questionnaire_answers, reviewed_by, audit_code) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+                review_channel, friend_qq_number, playtime, technical_direction, email,
+                questionnaire_answers, audit_code) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
         '''
         try:
             self.cursor.execute(sql_insert, values_tuple)
@@ -74,36 +72,6 @@ class MinecraftWhitelistManager:
         self.conn.commit()
         return True
     
-    def add_reviewer_name(self, username: str, reviewer_name: str) -> bool:
-        """
-        添加对用户通过审核的审核员名称。
-        """
-        try:
-            sql = """
-                UPDATE users SET reviewed_by = ? WHERE username = ?
-            """
-            self.cursor.execute(sql, (reviewer_name, username))
-            self.conn.commit()
-            return True
-        except Exception as e:
-            logger.error(f"添加审核人名称时出现错误：{e}")
-
-    def modify_passed_second_review_status_by_username(self, username, is_passed_second_review: str) -> bool:
-        # 修改指定用户名的用户 被添加到通过二审
-        if is_passed_second_review not in ('Yes', 'No'):
-            return False
-        
-        try:
-            sql_modify = '''
-                UPDATE users SET passed_second_review = ? WHERE username = ?
-            '''
-            self.cursor.execute(sql_modify, (is_passed_second_review, username))
-            self.conn.commit()
-            return True
-        except Exception as e:
-            logger.error(f"通过二次审核时数据库错误：{e}")
-            return False
-    
     def is_email_registered(self, email: str) -> bool:
         # 检查指定的email是否已经注册过
         sql_query = "SELECT COUNT(*) FROM users WHERE email = ?"
@@ -118,21 +86,19 @@ class MinecraftWhitelistManager:
         user_data = self.cursor.fetchone()
         if user_data:
             return {
-                "username": user_data[1],
-                "game_name": user_data[2],
-                "registration_time": user_data[3],
-                "qq_number": user_data[4],
-                "has_official_account": user_data[5],
-                "current_status": user_data[6],
-                "review_channel": user_data[7],
-                "friend_qq_number": user_data[8],
-                "playtime": user_data[9],
-                "technical_direction": user_data[10],
-                "email": user_data[11],
-                "passed_second_review": user_data[12],
-                "questionnaire_answers": user_data[13],
-                "reviewed_by": user_data[14],
-                "audit_code": user_data[15]
+                "username": user_data[0],
+                "game_name": user_data[1],
+                "registration_time": user_data[2],
+                "qq_number": user_data[3],
+                "has_official_account": user_data[4],
+                "current_status": user_data[5],
+                "review_channel": user_data[6],
+                "friend_qq_number": user_data[7],
+                "playtime": user_data[8],
+                "technical_direction": user_data[9],
+                "email": user_data[10],
+                "questionnaire_answers": user_data[11],
+                "audit_code": user_data[12]
             }
         else:
             return None
@@ -231,35 +197,3 @@ class AdminDataManager:
 
     def close_connection(self):
         self.conn.close()
-
-
-if __name__ in "__main__":
-    from methods import CreateKey
-    # 调用迁移函数
-    # migrate_data()
-    # 使用示例：
-    # manager = MinecraftWhitelistManager()
-
-    # # 获取所有用户名
-    # all_usernames = manager.get_all_usernames()
-    
-    # user_data = manager.get_data_by_username('PYmili')
-
-    # 获取最近注册的10个用户数据
-    # recent_users = manager.get_recent_users(10)
-
-    # manager.close_connection()
-
-    # print(user_data)
-    # print(all_usernames)
-    # print(recent_users)
-
-    manager = AdminDataManager()
-    # manager.insert_new_user("2546947442", "sagiri0915", CreateKey())
-    # manager.insert_new_user("kk", "114514", CreateKey())
-    # manager.insert_new_user("mydqc", "0123456789", CreateKey())
-    input_data = input("Input new username and password: ").split()
-    if input_data: 
-        manager.insert_new_user(input_data[0], input_data[-1], CreateKey())
-    print("All User:", end="\n\t")
-    print("\n\t".join(manager.get_all_usernames()))

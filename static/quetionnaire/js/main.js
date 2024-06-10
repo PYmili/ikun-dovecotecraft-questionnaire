@@ -34,10 +34,104 @@ function hideLoadingMessage() {
     }
 }
 
+var timer; // 定时器
+function sendVerificationCode() {
+    // 获取用户输入的邮箱地址
+    var email = document.getElementById('email').value;
+
+    if (email === "") {
+        alert("请输入地址！");
+        return;
+    }
+
+    // 获取发送验证码按钮元素
+    var sendButton = document.getElementById('send_verification_code');
+
+    // 禁用发送按钮（改变其样式和行为）
+    sendButton.style.pointerEvents = 'none'; // 阻止点击事件
+    sendButton.classList.add('disabled'); // 添加禁用样式
+
+    // 设置倒计时时间（单位：秒）
+    var countDownSeconds = 60;
+
+    // 更新按钮文字为倒计时
+    sendButton.textContent = countDownSeconds + '秒后重新发送';
+
+    // 启动定时器，每秒更新倒计时时间
+    timer = setInterval(function() {
+        countDownSeconds--;
+        sendButton.textContent = countDownSeconds + '秒后重新发送';
+
+        // 如果倒计时结束，恢复发送按钮状态
+        if (countDownSeconds <= 0) {
+            clearInterval(timer);
+            sendButton.style.pointerEvents = 'auto'; // 恢复点击事件
+            sendButton.classList.remove('disabled'); // 移除禁用样式
+            sendButton.textContent = '发送验证码';
+        }
+    }, 1000);
+
+    // 构建 POST 请求的参数
+    var params = {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email: email })
+    };
+
+    // 发送 POST 请求
+    fetch('/send_verification_code', params)
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            }
+            throw new Error('Failed to send verification code');
+        })
+        .then(data => {
+            alert(data['content']);
+        })
+        .catch(error => {
+            console.error('Error sending verification code:', error);
+            alert('验证码发送失败，请稍后重试');
+        });
+}
+
+// 发送通过AI审核
+function sendPassRequest(userName, auditCode) {
+    // 构建 POST 请求的参数
+    var params = {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            user_name: userName,
+            audit_code: auditCode
+        })
+    };
+
+    // 发送 POST 请求到服务器端的审核通过接口
+    fetch('/pass', params)
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            }
+            throw new Error('审核通过请求失败！');
+        })
+        .then(data => {
+            // 请求成功，处理返回的数据
+            console.log('发送通过请求返回：', data);
+        })
+        .catch(error => {
+            // 请求失败，处理错误
+            console.error('审核通过请求失败：', error);
+            alert('审核通过请求失败，请稍后重试！');
+        });
+}
+
 // 获取表单提交按钮
 const submitButton = document.getElementById('submit_button');
-
-
 // 监听提交按钮点击事件
 submitButton.addEventListener('click', function(event) {
     // 阻止表单默认提交行为
@@ -101,7 +195,7 @@ submitButton.addEventListener('click', function(event) {
     const questionsJSON = JSON.stringify(questionObject);
 
     // 打印 JSON
-    console.log(questionsJSON);
+    // console.log(questionsJSON);
 
 
     // 编写注册功能
@@ -141,74 +235,15 @@ submitButton.addEventListener('click', function(event) {
         })
         .then(data => {
             alert(data['content']);
+            if (data['code'] == 200) {
+                // 发送通过请求
+                sendPassRequest(username, data['auditCode']);
+            }
         })
         .catch(error => {
             // 隐藏加载中消息
             hideLoadingMessage()
+            console.log(error);
             alert('请求失败！请联系管理员！');
         });
 });
-
-
-var timer; // 定时器
-function sendVerificationCode() {
-    // 获取用户输入的邮箱地址
-    var email = document.getElementById('email').value;
-
-    if (email === "") {
-        alert("请输入地址！");
-        return;
-    }
-
-    // 获取发送验证码按钮元素
-    var sendButton = document.getElementById('send_verification_code');
-
-    // 禁用发送按钮（改变其样式和行为）
-    sendButton.style.pointerEvents = 'none'; // 阻止点击事件
-    sendButton.classList.add('disabled'); // 添加禁用样式
-
-    // 设置倒计时时间（单位：秒）
-    var countDownSeconds = 60;
-
-    // 更新按钮文字为倒计时
-    sendButton.textContent = countDownSeconds + '秒后重新发送';
-
-    // 启动定时器，每秒更新倒计时时间
-    timer = setInterval(function() {
-        countDownSeconds--;
-        sendButton.textContent = countDownSeconds + '秒后重新发送';
-
-        // 如果倒计时结束，恢复发送按钮状态
-        if (countDownSeconds <= 0) {
-            clearInterval(timer);
-            sendButton.style.pointerEvents = 'auto'; // 恢复点击事件
-            sendButton.classList.remove('disabled'); // 移除禁用样式
-            sendButton.textContent = '发送验证码';
-        }
-    }, 1000);
-
-    // 构建 POST 请求的参数
-    var params = {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ email: email })
-    };
-
-    // 发送 POST 请求
-    fetch('/send_verification_code', params)
-        .then(response => {
-            if (response.ok) {
-                return response.json();
-            }
-            throw new Error('Failed to send verification code');
-        })
-        .then(data => {
-            alert(data['content']);
-        })
-        .catch(error => {
-            console.error('Error sending verification code:', error);
-            alert('验证码发送失败，请稍后重试');
-        });
-}
