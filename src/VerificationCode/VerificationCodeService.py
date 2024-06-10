@@ -35,7 +35,7 @@ class VerificationCodeService:
 
     def send_code(self, to_email_adder: str) -> bool:
         """
-        生成并发送验证码到指定电话号码
+        生成并发送验证码到指定邮件
         
         :params
             to_email_adder str: 要发送至的邮件地址

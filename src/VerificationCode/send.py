@@ -114,7 +114,5 @@ def sendEmailVerufucationCode(receiver: str, code: str) -> bool:
         return True
 
     except Exception as e:
+        logger.error(e)
         return False
-
-    finally:
-        server.quit()

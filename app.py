@@ -1,5 +1,6 @@
 import sys
 import os
+import time
 import json
 
 from flask import Flask
@@ -22,20 +23,30 @@ app = Flask(
 QUESTION_JSON_PATH = os.path.join(os.getcwd(), "data", "json", "questions.json")
 
 
-def GPT_Event(problem: str, reply: str) -> str:
+def AIEvent(problem: str, reply: str) -> str:
+    """
+    AI处理事件
+    Params:
+        problem: str
+        reply: str
+    :return str
+    """
     gpt = questionaire_ai.GPT()
     gpt.addMessage(
-        f"{problem}\n用户回答：{reply}"
+        f"{problem}\n{reply}"
     )
     gpt_reslut = gpt.run()
-    logger.info("GPT: " + gpt_reslut)
-    if len(gpt_reslut) == 0:
-        return "gpt错误，请与管理员联系！"
+    if not gpt_reslut:
+        return "ai错误，请与管理员联系！"
 
     return gpt_reslut
 
 
-def get_questions() -> dict:
+def getQuestions() -> dict:
+    """
+    获取所有需要AI查看的问题
+    :return dict
+    """
     result = {}
     if os.path.isfile(QUESTION_JSON_PATH) is True:
         with open(QUESTION_JSON_PATH, "r", encoding="utf-8") as rfp:
@@ -58,29 +69,34 @@ def questionnaire():
     """
     return render_template(
         "questionnaire.html",
-        questions=get_questions()
+        questions=getQuestions()
     )
 
 
 @app.route("/user_information")
-def user_information():
+def userInformation():
+    """
+    获取所有用户的信息
+    """
     if not request.cookies:
         return redirect("/login")
     
+    # 从cookies获取key, username两个关键数据
     key = request.cookies.get("key")
     username = request.cookies.get("username")
     if not all([key, username]):
         return redirect("/login")
     
+    # 从数据库中查询数据
     manager = AdminDataManager()
     by_username_result = manager.get_user_data_by_username(username)
     manager.close_connection()
     if not by_username_result:
         return redirect("/login")
-    
     if key != by_username_result['key']:
         return redirect("/login")
     
+    # 整理数据并返回
     userInformations = []
     manager = MinecraftPlayerListManager()
     for user in manager.get_all_usernames():
@@ -114,6 +130,7 @@ def login_api() -> dict:
     if not request.json:
         return result
     
+    # 通过用户名与密码进行登录
     username = request.json.get("username")
     password = request.json.get("password")
     if not all([username, password]):
@@ -122,15 +139,15 @@ def login_api() -> dict:
     
     manager = AdminDataManager()
     by_username_result = manager.get_user_data_by_username(username)
-    manager.close_connection()  # 释放manager罢免占用问题。
+    manager.close_connection()  # 释放manager
     if not by_username_result:
         result['content'] = "用户不存在！"
         return result
-    
     if password != by_username_result['password']:
         result['content'] = "密码错误！"
         return result
     
+    # 读取往期key数据，并进行更新
     manager = AdminDataManager()
     by_username_result['key'] = CreateKey()
     update_key_reuslt = manager.update_user_key_by_username(username, by_username_result['key'])
@@ -171,10 +188,12 @@ def sendVerificationCode():
     if not request.json:
         return result
 
+    # 获取需要发送的邮件地址
     email = request.json.get("email")
     if not email:
         return result
     
+    # 发送验证码
     vcs = VerificationCodeService()
     send_result = vcs.send_code(to_email_adder=email)
 
@@ -190,7 +209,7 @@ def sendVerificationCode():
 @app.route("/questionaire_upload", methods=["POST"])
 def questionaireUpload():
     """
-    上传数据api
+    上传问卷数据API
     """
     result = {
         "code": 400,
@@ -199,17 +218,20 @@ def questionaireUpload():
     if not request.json:
         return result
     
+    # 获取邮件和验证码
     email = request.json.get("email")
     verificationCode = request.json.get("verificationCode")
     if not all([email, verificationCode]):
         result['content'] = "未填写email地址或验证码"
         return result
+    # 验证验证码是否合法
     vcs = VerificationCodeService()
     verify_bool, verify_content = vcs.verify_code(email_adder=email, provided_code=verificationCode)
     if verify_bool is False:
         result['content'] = verify_content
         return result
     
+    # 用户及其邮件验证
     manager = MinecraftPlayerListManager()
     if manager.is_email_registered(email) is True:
         manager.close_connection()
@@ -221,37 +243,47 @@ def questionaireUpload():
         return result
     manager.close_connection()
     
+    # 获取requests.json中所有问题
     questions = json.loads(request.json.get("questions"))
-    QUESTIONS = get_questions()
+    if not questions:
+        result["content"] = "服务器错误！"
+        return result
+    # 获取已设定的所有问题
+    QUESTIONS = getQuestions()
+    # 最后保存
     save_questions = {}
-    if questions:
-        count = 1
-        for question_value in questions.values():
-            question_result = GPT_Event(
-                QUESTIONS[count], f"用户：" + question_value
-            )
-            if question_result.strip("。") != "通过":
-                result["content"] = f"问题：{QUESTIONS[count]}\n未通过原因：" + question_result
-                return result
-            
-            save_questions[QUESTIONS[count]] = question_value
-            count += 1
+    count = 1   # 问题个数
+    for question_value in questions.values():
+        # 让AI去判断问题，并返回是否通过
+        question_result = AIEvent(
+            QUESTIONS[count], f"用户：" + question_value
+        ).strip()
+        logger.info("AI: " + question_result)
+        # 如果不通过
+        if question_result != "[通过]":
+            result["content"] = f"问题：{QUESTIONS[count]}\n未通过原因：" + question_result
+            return result
+        # 保存
+        save_questions[QUESTIONS[count]] = question_value
+        count += 1
+        time.sleep(1)
     
+    # 自我介绍处理
     self_introduction = request.json.get("selfIntroduction")
     reason = request.json.get("reason")
     if not all([self_introduction, reason]):
         result['content'] = "请填写自我介绍、理由。"
         return result
-    
-    self_introduction_result = GPT_Event("这是用户的自我介绍，你查看是否合法：", self_introduction)
-    reason_result = GPT_Event("这是用户的进入服务器的理由：", reason)
-    if self_introduction_result != "通过":
+    self_introduction_result = AIEvent("这是用户的自我介绍，你查看是否合法：", self_introduction)
+    reason_result = AIEvent("这是用户的进入服务器的理由：", reason)
+    if self_introduction_result != "[通过]":
         result["content"] = self_introduction_result
         return result
-    if reason_result != "通过":
+    if reason_result != "[通过]":
         result['content'] = reason_result
         return result
 
+    # 生成邀请码并对数据录入数据库
     AuditCode = CreateKey(length=10)
     MinecraftUserData = {
         "username": request.json.get("username"),
@@ -276,7 +308,7 @@ def questionaireUpload():
     
     result["code"] = 200
     result["content"] = "通过 AI 审核，请注意你的邮箱信息，耐心等待管理员同意！"
-    result["auditCode"] = AuditCode
+    result["auditCode"] = AuditCode # 将邀请码添加到返回
 
     # 邮件提醒管理员
     email_event = EmailEvent()
@@ -303,10 +335,11 @@ def questionaireUpload():
 @app.route("/pass", methods=["POST"])
 def passEvent():
     """
-    给予用户通过
+    给予用户通过API
     """
     result = {"code": 400}
     
+    # 获取用户名和邀请码
     userName = request.json.get("user_name")
     auditCode = request.json.get("audit_code")
     if not all([userName, auditCode]):
@@ -314,6 +347,7 @@ def passEvent():
         logger.warning(result["content"])
         return result
     
+    # 验证用户及邀请码
     manager = MinecraftPlayerListManager()
     get_result = manager.get_data_by_username(userName)
     if not get_result:
@@ -321,12 +355,14 @@ def passEvent():
         result['content'] = "用户不存在！"
         logger.warning(result["content"])
         return result
+    # 验证邀请码
     if get_result.get("audit_code") != auditCode:
         manager.close_connection()
         result["content"] = "审核码错误！"
         logger.warning("审核码错误！")
         return result
     
+    # 发送邮件给用户邮箱
     email_event = EmailEvent()
     email_event.setSubject("您已通过AI审核！")
     email_event.setContent(content_html=f"""
@@ -350,13 +386,13 @@ def passEvent():
     <body>
     </html>
     """)
+    # 邮件是否发送成功
     if email_event.send(receivers=[get_result['email']]) is False:
         result['content'] = "发送邮件失败！"
         logger.warning(result["content"])
         return result
     
     logger.info(f"给予用户: {userName} 通过")
-
     result['code'] = 200
     result['content'] = "success"
     return result
